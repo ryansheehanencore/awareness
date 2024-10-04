@@ -98,8 +98,8 @@ const toSentenceCase = (str) => {
             // If this is a final result, reset the flag for the next sentence
         
             if (event.results[i].isFinal) {
-                transcriptText = toSentenceCase(transcriptText);  // Only capitalize the first word
-                interimTranscript += '.';  // Add period for the end of the sentence (optional)
+                
+                interimTranscript+= '.';  // Add period for the end of the sentence (optional)
                 isNewSentence = true;  // Ready to start a new sentence
             }
         }
@@ -110,7 +110,7 @@ const toSentenceCase = (str) => {
             transcript.style.opacity = 1;
             clearTimeout(fadeOutTimeout);
                 ///change timeout of old phrases
-            fadeOutTimeout = setTimeout(fadeOutText, 750);
+            fadeOutTimeout = setTimeout(fadeOutText, 1250);
         }
     }
 };

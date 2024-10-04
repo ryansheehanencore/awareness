@@ -20,7 +20,7 @@
 
         #transcription {
             text-align: center;
-            font-size: 50px;
+            font-size: 24px;
             opacity: 0;
             transition: opacity 1s;
             word-wrap: break-word;
@@ -55,7 +55,7 @@
         let isMuted = true;
         let transcript = document.getElementById('transcription');
         let menu = document.getElementById('menu');
-        let fontSize = 50;
+        let fontSize = 24;
         let fadeRate = 1000;
         let currentLines = [];  // Array to store currently displayed lines
 
@@ -63,26 +63,6 @@
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
             menu.classList.add('visible');
             setTimeout(() => menu.classList.remove('visible'), 1000);
-        };
-
-        const fadeOutText = () => {
-            transcript.style.transition = `opacity ${fadeRate}ms`;
-            transcript.style.opacity = 0;
-        };
-
-        const addLine = (text) => {
-            currentLines.push(text);
-
-            if (currentLines.length > 2) {
-                // If more than two lines, fade out the first (oldest) line
-                currentLines.shift();  // Remove the oldest line
-                fadeOutOldestLine();    // Fade it out
-            }
-
-            // Update the display with the current lines
-            transcript.innerHTML = currentLines.join('<br>');
-            transcript.style.fontSize = `${fontSize}px`;
-            transcript.style.opacity = 1;
         };
 
         const fadeOutOldestLine = () => {
@@ -93,20 +73,49 @@
             }, 500);  // 500ms quick fade out
         };
 
+        const updateDisplay = () => {
+            // Update the display with the current lines
+            transcript.innerHTML = currentLines.join('<br>');
+            transcript.style.fontSize = `${fontSize}px`;
+            transcript.style.opacity = 1;
+        };
+
+        const addWordToLine = (text) => {
+            if (currentLines.length === 0) {
+                currentLines.push(text);  // Add first line
+            } else {
+                // Add to the current (last) line
+                let lastLine = currentLines[currentLines.length - 1];
+                if (lastLine.length + text.length < 60) { // Adjust 60 to fit your needs
+                    currentLines[currentLines.length - 1] = lastLine + ' ' + text;
+                } else {
+                    currentLines.push(text);  // Start a new line
+                }
+            }
+
+            // If there are more than 2 lines, remove the first one
+            if (currentLines.length > 2) {
+                currentLines.shift();  // Remove the oldest line
+                fadeOutOldestLine();    // Fade it out
+            }
+
+            updateDisplay();
+        };
+
         const handleTranscription = (event) => {
             if (!isMuted) {
-                let interimTranscript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const result = event.results[i];
-                    interimTranscript += result[0].transcript.trim() + ' ';
-                    if (result.isFinal) {
-                        interimTranscript = '';  // Reset for final transcripts
+                    if (result[0].transcript.trim() !== '') {
+                        addWordToLine(result[0].transcript.trim());  // Add words one by one
                     }
-                }
-                if (interimTranscript) {
-                    addLine(interimTranscript.trim());  // Add line with current interim text
-                    clearTimeout(fadeOutTimeout);
-                    fadeOutTimeout = setTimeout(fadeOutText, 500);
+                    if (result.isFinal) {
+                        // Clear the lines after a pause
+                        setTimeout(() => {
+                            currentLines = [];
+                            transcript.style.opacity = 0;
+                        }, fadeRate);
+                    }
                 }
             }
         };

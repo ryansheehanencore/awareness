@@ -84,6 +84,7 @@
                 let interimTranscript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const result = event.results[i];
+                    let transcriptText = result[0].transcript.trim();
                     interimTranscript += result[0].transcript.trim() + ' ';
 
                     // Capitalize the first letter

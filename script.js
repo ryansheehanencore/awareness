@@ -1,95 +1,93 @@
-alert("Script loaded successfully");
+// Constants
+const FADE_IN_DURATION = 125;
+const FADE_OUT_DURATION = 1000;
+const PAUSE_DURATION = 500;
+const MENU_DURATION = 1000;
+const FONT_SIZE_STEP = 2;
+const FADE_RATE_STEP = 50;
 
-window.onload = () => {
-  console.log("Page loaded, starting transcription...");
-  startTranscription();
-};
+// Variables
+let isMuted = true;
+let transcriptionElement = document.getElementById('transcription');
+let speechRecognition = new webkitSpeechRecognition();
+let currentPhrase = '';
+let fadeTimeout;
+let menuTimeout;
+let fontSize = 24;
+let fadeRate = FADE_OUT_DURATION;
 
-async function startTranscription() {
-  console.log("Requesting microphone access...");
-  try {
-    await navigator.mediaDevices.getUserMedia({ audio: true });
-    console.log("Microphone access granted.");
-    
-    recognition.continuous = true;
-    recognition.interimResults = true;
-    recognition.lang = 'en-US';
-
-    recognition.onresult = (event) => {
-      let transcript = '';
-      for (let i = event.resultIndex; i < event.results.length; ++i) {
-        if (event.results[i].isFinal) {
-          transcript = event.results[i][0].transcript;
-        }
-      }
-
-      if (transcript) {
-        console.log("Transcribed text: ", transcript); // Log the transcribed text
-        displayText(transcript);
-      }
-    };
-
-    recognition.start();
-    console.log("Speech recognition started.");
-  } catch (error) {
-    console.error("Microphone access denied or unavailable", error);
-  }
+// Functions
+function startSpeechRecognition() {
+    speechRecognition.start();
 }
-console.log("Script loaded successfully");
 
-console.log("Requesting microphone access...");
-if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
-  console.error("Speech recognition not supported in this browser.");
-  return;
+function stopSpeechRecognition() {
+    speechRecognition.stop();
 }
-recognition.onstart = () => {
-  console.log("Speech recognition service has started.");
-};
 
-recognition.onend = () => {
-  console.log("Speech recognition service has ended.");
-};
-
-recognition.onresult = (event) => {
-  console.log("Speech recognition result received.");
-  let transcript = '';
-  for (let i = event.resultIndex; i < event.results.length; ++i) {
-    if (event.results[i].isFinal) {
-      transcript = event.results[i][0].transcript;
+function handleSpeechEvent(event) {
+    if (event.type === 'result') {
+        const transcript = event.results[event.results.length - 1][0].transcript;
+        currentPhrase += transcript;
+        transcriptionElement.textContent = currentPhrase;
+        clearTimeout(fadeTimeout);
+        fadeTimeout = setTimeout(() => {
+            transcriptionElement.style.opacity = 0;
+            setTimeout(() => {
+                transcriptionElement.textContent = '';
+                currentPhrase = '';
+            }, FADE_OUT_DURATION);
+        }, PAUSE_DURATION);
     }
-  }
-
-  if (transcript) {
-    console.log("Transcribed text: ", transcript);
-    displayText(transcript);
-  }
-};
-
-function displayText(text) {
-  console.log("Displaying text: ", text);
-  clearTimeout(fadeTimeout);
-  textBox.style.opacity = '1'; // Ensure the text is visible
-  textBox.textContent = formatText(text); // This should update the text in the HTML
-
-  // Set a timeout to fade out the text after 500ms of inactivity
-  fadeTimeout = setTimeout(() => {
-    textBox.style.opacity = '0';
-  }, 500); // Pause duration before fade
 }
 
-
-function displayText(text) {
-  console.log("Displaying text: ", text); // Log the text to be displayed
-  clearTimeout(fadeTimeout);
-  textBox.style.opacity = '1'; // Ensure the text is visible
-  textBox.textContent = formatText(text);
-
-  fadeTimeout = setTimeout(() => {
-    textBox.style.opacity = '0'; // Fade out
-  }, 500); // Pause duration before fade
+function handleKeyPress(event) {
+    if (event.key === 'M') {
+        isMuted = !isMuted;
+        if (!isMuted) {
+            startSpeechRecognition();
+        } else {
+            stopSpeechRecognition();
+        }
+    } else if (event.key === 'ArrowUp') {
+        fontSize += FONT_SIZE_STEP;
+        transcriptionElement.style.fontSize = fontSize + 'px';
+        showMenu();
+    } else if (event.key === 'ArrowDown') {
+        fontSize -= FONT_SIZE_STEP;
+        transcriptionElement.style.fontSize = fontSize + 'px';
+        showMenu();
+    } else if (event.key === 'ArrowLeft') {
+        fadeRate -= FADE_RATE_STEP;
+        showMenu();
+    } else if (event.key === 'ArrowRight') {
+        fadeRate += FADE_RATE_STEP;
+        showMenu();
+    }
 }
-#transcription-text {
-  font-size: 50px; /* Default font size */
-  color: white; /* Ensure the color is white */
-  border: 1px solid red; /* Temporary border to see if it's visible */
+
+function showMenu() {
+    const menu = document.createElement('div');
+    menu.textContent = `Up/Down Font Size: ${fontSize}  Left/Right Fade Rate: ${fadeRate}`;
+    menu.style.position = 'absolute';
+    menu.style.top = '0';
+    menu.style.left = '0';
+    menu.style.backgroundColor = 'black';
+    menu.style.color = 'white';
+    document.body.appendChild(menu);
+    clearTimeout(menuTimeout);
+    menuTimeout = setTimeout(() => {
+        menu.remove();
+    }, MENU_DURATION);
+}
+
+// Event listeners
+speechRecognition.onresult = handleSpeechEvent;
+window.addEventListener('keypress', handleKeyPress);
+
+// Initial microphone permission request
+if ('webkitSpeechRecognition' in window) {
+    startSpeechRecognition();
+} else {
+    console.log('Web Speech API is not supported.');
 }

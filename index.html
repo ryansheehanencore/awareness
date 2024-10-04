@@ -1,202 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Voice Transcription Display</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-time Voice Transcription Display</title>
     <style>
         body {
             background-color: black;
             color: white;
-            margin: 0;
-            height: 100vh;
+            font-size: 24px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: Arial, sans-serif;
+            height: 100vh;
+            margin: 0;
             overflow: hidden;
         }
-        #transcription-container {
-            text-align: center;
-            max-width: 90vw;
-        }
         #transcription {
-            opacity: 1;
-            transition: opacity 1s;
+            text-align: center;
+            white-space: pre-wrap;
         }
-        .new-word {
-            opacity: 0;
-            transition: opacity 125ms;
-        }
-        #controls {
-            position: fixed;
+        #menu {
+            position: absolute;
             top: 10px;
             left: 10px;
             opacity: 0;
             transition: opacity 1s;
-            font-size: 14px;
-        }
-        #start-message {
-            font-size: 24px;
         }
     </style>
 </head>
 <body>
-    <div id="controls">
-        Up/Down Font Size: <span id="font-size">36</span><br>
-        Left/Right Fade Rate: <span id="fade-rate">1000</span>
-    </div>
-    <div id="transcription-container">
-        <div id="start-message">Press 'M' to unmute</div>
-        <div id="transcription"></div>
-    </div>
-
+    <div id="menu">Up/Down Font Size: 24<br>Left/Right Fade Rate: 1000</div>
+    <div id="transcription">Press 'M' to unmute</div>
     <script>
-        let recognition;
-        let isListening = false;
-        let fontSize = 36;
+        let transcription = document.getElementById('transcription');
+        let menu = document.getElementById('menu');
+        let fontSize = 24;
         let fadeRate = 1000;
-        let controlsTimeout;
-        
-        const transcriptionEl = document.getElementById('transcription');
-        const startMessageEl = document.getElementById('start-message');
-        const controlsEl = document.getElementById('controls');
-        const fontSizeEl = document.getElementById('font-size');
-        const fadeRateEl = document.getElementById('fade-rate');
+        let recognizing = false;
+        let recognition;
 
-        function initSpeechRecognition() {
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.interimResults = true;
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
             recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
 
-            let currentPhrase = document.createElement('div');
-            let phraseTimeout;
-
-            recognition.onresult = (event) => {
-                clearTimeout(phraseTimeout);
-                
-                const result = event.results[event.results.length - 1];
-                const transcript = result[0].transcript;
-                
-                // Split the transcript into words
-                const words = transcript.split(' ');
-                
-                // Clear previous content and create new elements for each word
-                currentPhrase.innerHTML = '';
-                words.forEach((word, index) => {
-                    const wordSpan = document.createElement('span');
-                    wordSpan.textContent = (index > 0 ? ' ' : '') + word;
-                    wordSpan.className = 'new-word';
-                    currentPhrase.appendChild(wordSpan);
-                    
-                    // Trigger reflow and add opacity
-                    setTimeout(() => {
-                        wordSpan.style.opacity = '1';
-                    }, 10);
-                });
-
-                if (!currentPhrase.parentElement) {
-                    transcriptionEl.appendChild(currentPhrase);
-                }
-
-                // Handle line wrapping
-                if (currentPhrase.offsetHeight > fontSize * 2.4) { // Roughly two lines
-                    const words = Array.from(currentPhrase.children);
-                    let firstLineHeight = 0;
-                    let splitIndex = 0;
-
-                    for (let i = 0; i < words.length; i++) {
-                        if (words[i].offsetTop > firstLineHeight) {
-                            if (firstLineHeight === 0) {
-                                firstLineHeight = words[i].offsetTop;
-                                splitIndex = i;
-                            } else if (words[i].offsetTop > firstLineHeight) {
-                                // We've found the start of the third line
-                                const newPhrase = document.createElement('div');
-                                for (let j = splitIndex; j < words.length; j++) {
-                                    newPhrase.appendChild(words[j]);
-                                }
-                                currentPhrase.style.opacity = '0';
-                                setTimeout(() => {
-                                    if (currentPhrase.parentElement) {
-                                        currentPhrase.parentElement.removeChild(currentPhrase);
-                                    }
-                                }, fadeRate);
-                                currentPhrase = newPhrase;
-                                transcriptionEl.appendChild(currentPhrase);
-                                break;
-                            }
-                        }
+            recognition.onresult = function(event) {
+                let interim_transcript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        interim_transcript += event.results[i].transcript + ' ';
                     }
                 }
+                displayTranscription(interim_transcript);
+            };
 
-                // Set timeout for phrase fade-out
-                if (result.isFinal) {
-                    phraseTimeout = setTimeout(() => {
-                        currentPhrase.style.opacity = '0';
-                        setTimeout(() => {
-                            if (currentPhrase.parentElement) {
-                                currentPhrase.parentElement.removeChild(currentPhrase);
-                            }
-                            currentPhrase = document.createElement('div');
-                        }, fadeRate);
-                    }, 500);
+            recognition.onend = function() {
+                if (recognizing) {
+                    recognition.start();
                 }
             };
-
-            recognition.onerror = (event) => {
-                console.error('Speech recognition error:', event.error);
-            };
         }
 
-        function toggleListening() {
-            if (!recognition) {
-                initSpeechRecognition();
-            }
-            
-            if (isListening) {
-                recognition.stop();
-                startMessageEl.textContent = 'Press \'M\' to unmute';
-                startMessageEl.style.display = 'block';
-            } else {
-                recognition.start();
-                startMessageEl.style.display = 'none';
-            }
-            isListening = !isListening;
-        }
-
-        function showControls() {
-            controlsEl.style.opacity = '1';
-            clearTimeout(controlsTimeout);
-            controlsTimeout = setTimeout(() => {
-                controlsEl.style.opacity = '0';
-            }, 1000);
+        function displayTranscription(text) {
+            transcription.innerText = text;
+            transcription.style.opacity = 1;
+            setTimeout(() => {
+                transcription.style.opacity = 0;
+            }, fadeRate);
         }
 
         document.addEventListener('keydown', (event) => {
-            if (event.key.toLowerCase() === 'm') {
-                toggleListening();
-            } else if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-                event.preventDefault();
-                if (event.key === 'ArrowUp') {
-                    fontSize = Math.min(fontSize + 2, 72);
-                } else if (event.key === 'ArrowDown') {
-                    fontSize = Math.max(fontSize - 2, 16);
-                } else if (event.key === 'ArrowRight') {
-                    fadeRate = Math.min(fadeRate + 100, 5000);
-                } else if (event.key === 'ArrowLeft') {
-                    fadeRate = Math.max(fadeRate - 100, 100);
+            if (event.key === 'm' || event.key === 'M') {
+                if (!recognizing) {
+                    recognition.start();
+                    recognizing = true;
+                    transcription.innerText = '';
                 }
-                
-                transcriptionEl.style.fontSize = `${fontSize}px`;
-                fontSizeEl.textContent = fontSize;
-                fadeRateEl.textContent = fadeRate;
-                showControls();
+            } else if (event.key === 'ArrowUp') {
+                fontSize += 2;
+                document.body.style.fontSize = fontSize + 'px';
+                showMenu();
+            } else if (event.key === 'ArrowDown') {
+                fontSize -= 2;
+                document.body.style.fontSize = fontSize + 'px';
+                showMenu();
+            } else if (event.key === 'ArrowLeft') {
+                fadeRate += 100;
+                showMenu();
+            } else if (event.key === 'ArrowRight') {
+                fadeRate -= 100;
+                showMenu();
             }
         });
 
-        // Initial setup
-        transcriptionEl.style.fontSize = `${fontSize}px`;
-        fontSizeEl.textContent = fontSize;
-        fadeRateEl.textContent = fadeRate;
+        function showMenu() {
+            menu.innerHTML = `Up/Down Font Size: ${fontSize}<br>Left/Right Fade Rate: ${fadeRate}`;
+            menu.style.opacity = 1;
+            setTimeout(() => {
+                menu.style.opacity = 0;
+            }, 1000);
+        }
     </script>
 </body>
 </html>

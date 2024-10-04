@@ -47,7 +47,7 @@ function displayText(text) {
 
   // Set a timeout to fade out the text after 500ms of inactivity
   fadeTimeout = setTimeout(() => {
-    textBox.style.transition = `opacity ${fadeDuration}ms`;
+    textBox.style.transition = 'opacity ' + fadeDuration + 'ms'; // Use string concatenation
     textBox.style.opacity = '0';
   }, 500); // Pause duration before fade
 }

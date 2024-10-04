@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Audio Transcription</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            overflow: hidden;
+        }
+        #transcript {
+            text-align: center;
+            font-size: 50px;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div id="transcript"></div>
+    <script>
+        const transcriptDiv = document.getElementById('transcript');
+        let recognition;
+        let lastPhrase = '';
+        let fadeTimeout;
+
+        function startRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Your browser does not support speech recognition. Please use Chrome or Safari.');
+                return;
+            }
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+
+            recognition.onstart = () => {
+                console.log('Speech recognition started.');
+            };
+
+            recognition.onresult = (event) => {
+                const results = event.results;
+                const transcript = Array.from(results)
+                    .map(result => result[0].transcript)
+                    .join(' ');
+                
+                const currentPhrase = transcript.trim();
+
+                if (currentPhrase !== lastPhrase) {
+                    lastPhrase = currentPhrase;
+                    clearTimeout(fadeTimeout);
+                    displayText(currentPhrase);
+                    fadeTimeout = setTimeout(() => fadeOutText(), 500);
+                }
+            };
+
+            recognition.onend = () => {
+                console.log('Speech recognition ended. Restarting...');
+                recognition.start();
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error: ', event.error);
+            };
+
+            recognition.start();
+        }
+
+        function displayText(text) {
+            transcriptDiv.textContent = text;
+            transcriptDiv.style.opacity = 1; // Reset opacity for new text
+        }
+
+        function fadeOutText() {
+            transcriptDiv.style.opacity = 0;
+            setTimeout(() => {
+                transcriptDiv.textContent = ''; // Clear text after fade out
+            }, 500);
+        }
+
+        document.addEventListener('keydown', (event) => {
+            switch(event.key) {
+                case 'm':
+                    startRecognition();
+                    break;
+                case 'ArrowUp':
+                    adjustFontSize(5);
+                    break;
+                case 'ArrowDown':
+                    adjustFontSize(-5);
+                    break;
+                case 'ArrowLeft':
+                    adjustFadeOutDuration(-100);
+                    break;
+                case 'ArrowRight':
+                    adjustFadeOutDuration(100);
+                    break;
+                default:
+                    break;
+            }
+        });
+
+        function adjustFontSize(change) {
+            const currentSize = parseInt(window.getComputedStyle(transcriptDiv).fontSize);
+            transcriptDiv.style.fontSize = `${currentSize + change}px`;
+        }
+
+        function adjustFadeOutDuration(change) {
+            clearTimeout(fadeTimeout);
+            fadeTimeout = setTimeout(() => fadeOutText(), 500 + change);
+        }
+
+        // Request microphone access on page load
+        window.onload = function() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(() => {
+                    console.log('Microphone access granted.');
+                })
+                .catch((error) => {
+                    console.error('Microphone access denied: ', error);
+                });
+        };
+    </script>
+</body>
+</html>

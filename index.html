@@ -19,6 +19,7 @@
         #transcript {
             text-align: center;
             font-size: 50px;
+            transition: opacity 0.5s; /* Add transition for smooth fade */
         }
         #controls {
             position: absolute;
@@ -69,6 +70,7 @@
         function displayTranscript(text) {
             clearTimeout(timeoutId); // Clear the previous timeout
             transcriptElement.textContent = text;
+            transcriptElement.style.transition = `opacity ${fadeDuration / 1000}s`; // Apply fade duration
 
             if (text.trim()) {
                 timeoutId = setTimeout(() => {
@@ -94,7 +96,7 @@
                 transcriptElement.style.fontSize = fontSize + 'px';
                 fontSizeDisplay.textContent = fontSize;
             } else if (event.key === 'ArrowLeft') {
-                fadeDuration -= 50;
+                fadeDuration = Math.max(100, fadeDuration - 50); // Prevent negative fade duration
                 fadeDurationDisplay.textContent = fadeDuration;
             } else if (event.key === 'ArrowRight') {
                 fadeDuration += 50;

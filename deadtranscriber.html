@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Transcription Display</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #transcription {
+            text-align: center;
+            font-size: 50px;
+            opacity: 0;
+            transition: opacity 1s;
+            word-wrap: break-word;
+            max-width: 90vw;
+            line-height: 1.4;
+        }
+
+        #menu {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .visible {
+            opacity: 1 !important;
+        }
+
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu">Up/Down Font Size: 24 | Left/Right Fade Rate: 1000ms</div>
+    <div id="transcription"></div>
+
+    <script>
+        let isMuted = true;
+        let transcript = document.getElementById('transcription');
+        let menu = document.getElementById('menu');
+        let fontSize = 50;
+        let fadeRate = 1000;
+        let currentLines = [];  // Array to store currently displayed lines
+
+        const updateMenu = () => {
+            menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
+            menu.classList.add('visible');
+            setTimeout(() => menu.classList.remove('visible'), 1000);
+        };
+
+        const fadeOutText = () => {
+            transcript.style.transition = `opacity ${fadeRate}ms`;
+            transcript.style.opacity = 0;
+        };
+
+        const addLine = (text) => {
+            currentLines.push(text);
+
+            if (currentLines.length > 2) {
+                // If more than two lines, fade out the first (oldest) line
+                currentLines.shift();  // Remove the oldest line
+                fadeOutOldestLine();    // Fade it out
+            }
+
+            // Update the display with the current lines
+            transcript.innerHTML = currentLines.join('<br>');
+            transcript.style.fontSize = `${fontSize}px`;
+            transcript.style.opacity = 1;
+        };
+
+        const fadeOutOldestLine = () => {
+            // Fades out the oldest line quickly
+            transcript.classList.add('fade-out');
+            setTimeout(() => {
+                transcript.classList.remove('fade-out');
+            }, 500);  // 500ms quick fade out
+        };
+
+        const handleTranscription = (event) => {
+            if (!isMuted) {
+                let interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    interimTranscript += result[0].transcript.trim() + ' ';
+                    if (result.isFinal) {
+                        interimTranscript = '';  // Reset for final transcripts
+                    }
+                }
+                if (interimTranscript) {
+                    addLine(interimTranscript.trim());  // Add line with current interim text
+                    clearTimeout(fadeOutTimeout);
+                    fadeOutTimeout = setTimeout(fadeOutText, 500);
+                }
+            }
+        };
+
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = true;
+        recognition.interimResults = true;  // Enable interim results
+        recognition.onresult = handleTranscription;
+
+        let fadeOutTimeout;
+
+        window.addEventListener('keydown', (event) => {
+            switch (event.key) {
+                case 'M':
+                case 'm':
+                    isMuted = !isMuted;
+                    if (!isMuted) {
+                        recognition.start();
+                        transcript.innerHTML = 'Listening...';
+                    } else {
+                        recognition.stop();
+                        transcript.innerHTML = "Press 'M' to unmute";
+                        currentLines = [];  // Clear lines when muted
+                    }
+                    break;
+                case 'ArrowUp':
+                    fontSize += 2;
+                    updateMenu();
+                    break;
+                case 'ArrowDown':
+                    fontSize -= 2;
+                    updateMenu();
+                    break;
+                case 'ArrowLeft':
+                    fadeRate = Math.max(500, fadeRate - 100);
+                    updateMenu();
+                    break;
+                case 'ArrowRight':
+                    fadeRate += 100;
+                    updateMenu();
+                    break;
+            }
+        });
+
+        updateMenu();  // Initialize menu
+    </script>
+</body>
+</html>

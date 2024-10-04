@@ -1,76 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Audio Transcription</title>
-    <style>
-        body {
-            background-color: black;
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-        #transcript {
-            text-align: center;
-            font-size: 50px;
-        }
-    </style>
-</head>
-<body>
-    <div id="transcript">Initializing...</div>
-    <script>
-        let selectedMic = null;
-        let transcriptElement = document.getElementById('transcript');
-        let recognition;
-        let fontSize = 50;
-        let fadeDuration = 500;
+<script>
+    let selectedMic = null;
+    let transcriptElement = document.getElementById('transcript');
+    let recognition;
+    let fontSize = 50;
+    let fadeDuration = 500;
 
-        function startTranscription() {
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
+    function startTranscription() {
+        recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
 
-            recognition.onresult = (event) => {
-                let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        transcript += event.results[i][0].transcript;
-                    }
+        recognition.onresult = (event) => {
+            let transcript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    transcript += event.results[i][0].transcript;
                 }
-                displayTranscript(transcript);
-            };
-
-            recognition.start();
-        }
-
-        function displayTranscript(text) {
-            transcriptElement.textContent = text;
-        }
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'M' || event.key === 'm') {
-                // Logic to select microphone
-                alert('Microphone selection feature is under development.');
-            } else if (event.key === 'ArrowUp') {
-                fontSize += 2;
-                transcriptElement.style.fontSize = fontSize + 'px';
-            } else if (event.key === 'ArrowDown') {
-                fontSize -= 2;
-                transcriptElement.style.fontSize = fontSize + 'px';
-            } else if (event.key === 'ArrowLeft') {
-                fadeDuration -= 50;
-            } else if (event.key === 'ArrowRight') {
-                fadeDuration += 50;
             }
-        });
+            displayTranscript(transcript);
+        };
 
-        startTranscription();
-    </script>
-</body>
-</html>
+        recognition.onend = () => {
+            startTranscription(); // Restart recognition when it stops
+        };
+
+        recognition.start();
+    }
+
+    function displayTranscript(text) {
+        transcriptElement.textContent = text;
+    }
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'M' || event.key === 'm') {
+            // Logic to select microphone
+            alert('Microphone selection feature is under development.');
+        } else if (event.key === 'ArrowUp') {
+            fontSize += 2;
+            transcriptElement.style.fontSize = fontSize + 'px';
+        } else if (event.key === 'ArrowDown') {
+            fontSize -= 2;
+            transcriptElement.style.fontSize = fontSize + 'px';
+        } else if (event.key === 'ArrowLeft') {
+            fadeDuration -= 50;
+        } else if (event.key === 'ArrowRight') {
+            fadeDuration += 50;
+        }
+    });
+
+    startTranscription();
+</script>

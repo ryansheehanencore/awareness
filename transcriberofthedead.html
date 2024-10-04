@@ -88,10 +88,10 @@ const toSentenceCase = (str) => {
             let transcriptText = event.results[i][0].transcript.trim();
 
             // Check if we're at the start of a sentence
-            //if (isNewSentence) {
-               // transcriptText = toSentenceCase(transcriptText);  // Only capitalize the first word
-              //  isNewSentence = false;  // We've capitalized the first word, so turn off flag
-          //  }
+            if (isNewSentence) {
+               transcriptText = toSentenceCase(transcriptText);  // Only capitalize the first word
+              isNewSentence = false;  // We've capitalized the first word, so turn off flag
+           }
 
             interimTranscript += transcriptText + ' ';
 
@@ -99,7 +99,7 @@ const toSentenceCase = (str) => {
         
             if (event.results[i].isFinal) {
                 
-                interimTranscript+= '.';  // Add period for the end of the sentence (optional)
+                interimTranscript += '.';  // Add period for the end of the sentence (optional)
                 isNewSentence = true;  // Ready to start a new sentence
             }
         }

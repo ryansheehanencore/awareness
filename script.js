@@ -81,6 +81,22 @@ function showMenu() {
     }, MENU_DURATION);
 }
 
+function startSpeechRecognition(stream) {
+    speechRecognition.start();
+    speechRecognition.stream = stream;
+}
+
+// Request microphone permission once
+let mediaStream;
+navigator.mediaDevices.getUserMedia({ audio: true })
+    .then(stream => {
+        mediaStream = stream;
+        startSpeechRecognition(stream);
+    })
+    .catch(error => {
+        console.error('Error accessing microphone:', error);
+    });
+
 // Event listeners
 speechRecognition.onresult = handleSpeechEvent;
 window.addEventListener('keypress', handleKeyPress);

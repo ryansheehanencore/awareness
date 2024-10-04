@@ -77,41 +77,43 @@
 let isNewSentence = true;  // Flag to track if a new sentence is starting
 
 const toSentenceCase = (str) => {
-    // Capitalize only the first letter of the first word, leave the rest unchanged
+    // Capitalize the first letter of the first word
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
 const handleTranscription = (event) => {
     if (!isMuted) {
-        let interimTranscript = '';
+        let interimTranscript = '';  // String to hold interim results
+        let finalTranscript = '';    // String to hold final results
+
         for (let i = event.resultIndex; i < event.results.length; i++) {
             let transcriptText = event.results[i][0].transcript.trim();
 
-            // Check if it's a new sentence and capitalize only the first word
-            if (isNewSentence) {
-                transcriptText = toSentenceCase(transcriptText);  // Capitalize the first word
-                isNewSentence = false;  // Turn off the flag once we've capitalized the first word
-            }
-
-            // If the result is final, add a period and prepare for the next sentence
             if (event.results[i].isFinal) {
-                interimTranscript += transcriptText + '. ';
-                isNewSentence = true;  // Prepare for a new sentence
+                // For final results, apply sentence case to the first word
+                if (isNewSentence) {
+                    transcriptText = toSentenceCase(transcriptText);
+                }
+
+                // Append final result and add punctuation
+                finalTranscript += transcriptText + '. ';
+                isNewSentence = true;  // Reset flag for the next sentence
             } else {
-                // For interim results, append text without modifying case, leave flag unchanged
+                // For interim results, simply append the text as it is
                 interimTranscript += transcriptText + ' ';
+                isNewSentence = false;  // No need to capitalize for interim results
             }
         }
 
-        if (interimTranscript) {
-            transcript.innerHTML = interimTranscript.trim();
-            transcript.style.fontSize = `${fontSize}px`;
-            transcript.style.opacity = 1;
-            clearTimeout(fadeOutTimeout);
-            fadeOutTimeout = setTimeout(fadeOutText, 1000);
-        }
+        // Update the displayed transcription with both interim and final results
+        transcript.innerHTML = finalTranscript + interimTranscript;
+        transcript.style.fontSize = `${fontSize}px`;
+        transcript.style.opacity = 1;
+        clearTimeout(fadeOutTimeout);
+        fadeOutTimeout = setTimeout(fadeOutText, 1000);
     }
 };
+
 
 
 

@@ -1,0 +1,32 @@
+body {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: black;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+#transcription-box {
+  width: 100%;
+  text-align: center;
+}
+
+#transcription-text {
+  font-size: 50px; /* Default font size */
+  position: relative;
+  animation: fade-out 0.5s forwards;
+  line-height: 1.2; /* Adjust line height for better spacing */
+}
+
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}

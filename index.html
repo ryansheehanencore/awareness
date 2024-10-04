@@ -25,6 +25,7 @@
         .text-line {
             transition: opacity 0.5s;
             margin: 10px 0;
+            min-height: 60px;
         }
         #microphone-modal {
             display: none;
@@ -69,40 +70,76 @@
         let currentLine = 1;
         let fadeOutTimeout;
         let selectedMicrophoneId = null;
+        let lastResult = '';
+        let lastResultTime = Date.now();
 
         // Initialize speech recognition
         function initSpeechRecognition() {
+            if (recognition) {
+                recognition.stop();
+            }
+            
             recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.continuous = true;
             recognition.interimResults = true;
 
-            recognition.onresult = (event) => {
-                clearTimeout(fadeOutTimeout);
-                const result = event.results[event.results.length - 1];
-                const transcript = result[0].transcript;
+            recognition.onresult = handleRecognitionResult;
+            recognition.onend = handleRecognitionEnd;
+            
+            recognition.start();
+        }
+
+        function handleRecognitionResult(event) {
+            clearTimeout(fadeOutTimeout);
+            
+            const result = event.results[event.results.length - 1];
+            const transcript = result[0].transcript;
+            
+            if (transcript !== lastResult) {
+                lastResult = transcript;
+                lastResultTime = Date.now();
                 
-                const line = document.getElementById(`line${currentLine}`);
-                line.style.fontSize = `${fontSize}px`;
-                line.textContent = transcript;
-                line.style.opacity = 1;
-
-                if (!result.isFinal) return;
-
-                // Start fading out after 500ms of silence
-                fadeOutTimeout = setTimeout(() => {
-                    line.style.opacity = 0;
+                const currentLineElement = document.getElementById(`line${currentLine}`);
+                const otherLineElement = document.getElementById(`line${currentLine === 1 ? 2 : 1}`);
+                
+                currentLineElement.style.fontSize = `${fontSize}px`;
+                currentLineElement.textContent = transcript;
+                currentLineElement.style.opacity = 1;
+                
+                // Start fading out the other line if it has content
+                if (otherLineElement.textContent) {
+                    otherLineElement.style.opacity = 0;
                     setTimeout(() => {
-                        line.textContent = '';
-                        currentLine = currentLine === 1 ? 2 : 1;
+                        otherLineElement.textContent = '';
+                    }, fadeOutTime);
+                }
+            }
+
+            if (result.isFinal) {
+                // Switch to the other line for the next phrase
+                currentLine = currentLine === 1 ? 2 : 1;
+                
+                // Set up fade out for the completed phrase
+                fadeOutTimeout = setTimeout(() => {
+                    const lineToFade = document.getElementById(`line${currentLine === 1 ? 2 : 1}`);
+                    lineToFade.style.opacity = 0;
+                    setTimeout(() => {
+                        lineToFade.textContent = '';
                     }, fadeOutTime);
                 }, 500);
-            };
+            }
+        }
 
-            recognition.onend = () => {
-                recognition.start();
-            };
-
-            recognition.start();
+        function handleRecognitionEnd() {
+            // Restart recognition if it ends
+            setTimeout(() => {
+                try {
+                    recognition.start();
+                } catch (err) {
+                    console.error('Failed to restart recognition:', err);
+                    initSpeechRecognition();
+                }
+            }, 1000);
         }
 
         // Handle microphone selection
@@ -118,17 +155,10 @@
                 li.onclick = () => {
                     selectedMicrophoneId = mic.deviceId;
                     document.getElementById('microphone-modal').style.display = 'none';
-                    restartRecognition();
+                    initSpeechRecognition();
                 };
                 micList.appendChild(li);
             });
-        }
-
-        function restartRecognition() {
-            if (recognition) {
-                recognition.stop();
-            }
-            initSpeechRecognition();
         }
 
         // Event listeners

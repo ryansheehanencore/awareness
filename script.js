@@ -1,3 +1,5 @@
+alert("Script loaded successfully");
+
 async function startTranscription() {
   console.log("Requesting microphone access...");
   try {

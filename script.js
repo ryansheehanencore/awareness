@@ -1,5 +1,10 @@
 alert("Script loaded successfully");
 
+window.onload = () => {
+  console.log("Page loaded, starting transcription...");
+  startTranscription();
+};
+
 async function startTranscription() {
   console.log("Requesting microphone access...");
   try {

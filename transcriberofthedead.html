@@ -81,7 +81,7 @@ const toSentenceCase = (str) => {
 };
 
 
-      const handleTranscription = (event) => {
+     const handleTranscription = (event) => {
     if (!isMuted) {
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
@@ -90,17 +90,15 @@ const toSentenceCase = (str) => {
             // Check if we're at the start of a sentence
             if (isNewSentence) {
                transcriptText = toSentenceCase(transcriptText);  // Only capitalize the first word
-              isNewSentence = false;  // We've capitalized the first word, so turn off flag
-           }
+               isNewSentence = false;  // We've capitalized the first word, so turn off flag
+            }
 
-            interimTranscript += transcriptText + ' ';
-
-            // If this is a final result, reset the flag for the next sentence
-        
+            // If this is a final result, add the transcript text and a period
             if (event.results[i].isFinal) {
-                
-                interimTranscript += '.';  // Add period for the end of the sentence (optional)
+                interimTranscript += transcriptText.trim() + '.';  // Add period for the end of the sentence
                 isNewSentence = true;  // Ready to start a new sentence
+            } else {
+                interimTranscript += transcriptText + ' ';  // For interim results, add space
             }
         }
 
@@ -109,7 +107,6 @@ const toSentenceCase = (str) => {
             transcript.style.fontSize = `${fontSize}px`;
             transcript.style.opacity = 1;
             clearTimeout(fadeOutTimeout);
-                ///change timeout of old phrases
             fadeOutTimeout = setTimeout(fadeOutText, 1000);
         }
     }

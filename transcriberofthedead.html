@@ -74,9 +74,10 @@
             transcript.style.opacity = 0;
         };
 
-       let isNewSentence = true;  // Flag to track if a new sentence is starting
+     let isNewSentence = true;  // Flag to track if a new sentence is starting
 
 const toSentenceCase = (str) => {
+    // Capitalize only the first letter of the first word, leave the rest as is
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
@@ -86,7 +87,7 @@ const handleTranscription = (event) => {
         for (let i = event.resultIndex; i < event.results.length; i++) {
             let transcriptText = event.results[i][0].transcript.trim();
 
-            // Check if it's a new sentence, and capitalize the first word
+            // Check if it's a new sentence and capitalize only the first word
             if (isNewSentence) {
                 transcriptText = toSentenceCase(transcriptText);
                 isNewSentence = false;
@@ -97,7 +98,7 @@ const handleTranscription = (event) => {
                 interimTranscript += transcriptText + '. ';
                 isNewSentence = true;  // Prepare for a new sentence
             } else {
-                // For interim results, just append text
+                // For interim results, just append text without modifying case
                 interimTranscript += transcriptText + ' ';
             }
         }
@@ -111,6 +112,7 @@ const handleTranscription = (event) => {
         }
     }
 };
+
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = true;

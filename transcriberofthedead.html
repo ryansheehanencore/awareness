@@ -74,10 +74,10 @@
             transcript.style.opacity = 0;
         };
 
-     let isNewSentence = true;  // Flag to track if a new sentence is starting
+let isNewSentence = true;  // Flag to track if a new sentence is starting
 
 const toSentenceCase = (str) => {
-    // Capitalize only the first letter of the first word, leave the rest as is
+    // Capitalize only the first letter of the first word, leave the rest unchanged
     return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
@@ -89,8 +89,8 @@ const handleTranscription = (event) => {
 
             // Check if it's a new sentence and capitalize only the first word
             if (isNewSentence) {
-                transcriptText = toSentenceCase(transcriptText);
-                isNewSentence = false;
+                transcriptText = toSentenceCase(transcriptText);  // Capitalize the first word
+                isNewSentence = false;  // Turn off the flag once we've capitalized the first word
             }
 
             // If the result is final, add a period and prepare for the next sentence
@@ -98,7 +98,7 @@ const handleTranscription = (event) => {
                 interimTranscript += transcriptText + '. ';
                 isNewSentence = true;  // Prepare for a new sentence
             } else {
-                // For interim results, just append text without modifying case
+                // For interim results, append text without modifying case, leave flag unchanged
                 interimTranscript += transcriptText + ' ';
             }
         }
@@ -112,6 +112,7 @@ const handleTranscription = (event) => {
         }
     }
 };
+
 
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();

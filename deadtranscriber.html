@@ -20,12 +20,20 @@
 
         #transcription {
             text-align: center;
-            font-size: 24px;
-            opacity: 1;
+            font-size: 50px;
+            opacity: 0;
             transition: opacity 1s;
             word-wrap: break-word;
             max-width: 90vw;
-            line-height: 1.4;
+        }
+
+        #message {
+            position: absolute;
+            text-align: center;
+            font-size: 40px;
+            color: gray;
+            opacity: 1;
+            transition: opacity 1s;
         }
 
         #menu {
@@ -37,24 +45,23 @@
             transition: opacity 1s;
         }
 
-        .fade-out {
-            opacity: 0;
-            transition: opacity 0.5s;
+        .visible {
+            opacity: 1 !important;
         }
     </style>
 </head>
 <body>
     <div id="menu">Up/Down Font Size: 24 | Left/Right Fade Rate: 1000ms</div>
+    <div id="message">Press 'M' to start transcription</div>
     <div id="transcription"></div>
 
     <script>
         let isMuted = true;
         let transcript = document.getElementById('transcription');
+        let message = document.getElementById('message');
         let menu = document.getElementById('menu');
-        let fontSize = 24;
+        let fontSize = 50;
         let fadeRate = 1000;
-        let currentLines = [];  // Array to store the two lines currently displayed
-        let previousWords = ''; // To track interim words and avoid duplication
 
         const updateMenu = () => {
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
@@ -62,62 +69,37 @@
             setTimeout(() => menu.classList.remove('visible'), 1000);
         };
 
-        const updateDisplay = () => {
-            transcript.innerHTML = currentLines.join('<br>');
-            transcript.style.fontSize = `${fontSize}px`;
-            transcript.style.opacity = 1;
-        };
-
-        const addWordToLine = (text) => {
-            let lastLine = currentLines[currentLines.length - 1] || ''; // Use last line or create new one
-
-            if (lastLine.length + text.length < 60) { // Prevent overflow, adjust 60 to fit your needs
-                currentLines[currentLines.length - 1] = (lastLine ? lastLine + ' ' : '') + text;
-            } else {
-                currentLines.push(text); // Start a new line if it overflows
-            }
-
-            if (currentLines.length > 2) {
-                currentLines.shift();  // Remove the oldest line when there are more than two lines
-            }
-
-            updateDisplay();
+        const fadeOutText = () => {
+            transcript.style.transition = `opacity ${fadeRate}ms`;
+            transcript.style.opacity = 0;
         };
 
         const handleTranscription = (event) => {
             if (!isMuted) {
-                let currentTranscription = ''; // Track current phrase
-
+                let interimTranscript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const result = event.results[i];
-                    let words = result[0].transcript.trim();
-
+                    interimTranscript += result[0].transcript.trim() + ' ';
                     if (result.isFinal) {
-                        addWordToLine(words);  // Add the final words to the display
-                        previousWords = ''; // Clear the interim words when final
-                    } else {
-                        currentTranscription += words;
-                        if (currentTranscription !== previousWords) {
-                            addWordToLine(words);  // Only add new interim words
-                            previousWords = currentTranscription; // Track interim words
-                        }
+                        interimTranscript = '';  // Reset for final transcripts
                     }
-
-                    if (result.isFinal) {
-                        // Clear the lines after a pause
-                        setTimeout(() => {
-                            currentLines = [];
-                            transcript.style.opacity = 0;
-                        }, fadeRate);
-                    }
+                }
+                if (interimTranscript) {
+                    transcript.innerHTML = interimTranscript.trim();
+                    transcript.style.fontSize = `${fontSize}px`;
+                    transcript.style.opacity = 1;
+                    clearTimeout(fadeOutTimeout);
+                    fadeOutTimeout = setTimeout(fadeOutText, 500);
                 }
             }
         };
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.interimResults = true;  // Enable interim results
         recognition.onresult = handleTranscription;
+
+        let fadeOutTimeout;
 
         window.addEventListener('keydown', (event) => {
             switch (event.key) {
@@ -127,10 +109,12 @@
                     if (!isMuted) {
                         recognition.start();
                         transcript.innerHTML = 'Listening...';
+                        message.style.opacity = 0;  // Hide the message
                     } else {
                         recognition.stop();
-                        transcript.innerHTML = "Press 'M' to unmute";
-                        currentLines = [];  // Clear lines when muted
+                        transcript.innerHTML = '';
+                        message.innerHTML = "Press 'M' to start transcription";  // Show the message
+                        message.style.opacity = 1;
                     }
                     break;
                 case 'ArrowUp':

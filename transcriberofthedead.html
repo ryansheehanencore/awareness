@@ -74,12 +74,21 @@
             transcript.style.opacity = 0;
         };
 
+        const toSentenceCase = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+        };
+
+
         const handleTranscription = (event) => {
             if (!isMuted) {
                 let interimTranscript = '';
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const result = event.results[i];
-                    interimTranscript += result[0].transcript.trim() + ' ';
+                    //interimTranscript += result[0].transcript.trim() + ' ';
+
+                    // Capitalize the first letter
+            interimTranscript += toSentenceCase(transcriptText) + ' ';
+                    
                     if (result.isFinal) {
                         interimTranscript = '';  // Reset for final transcripts
                     }

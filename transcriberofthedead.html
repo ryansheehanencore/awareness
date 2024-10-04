@@ -51,7 +51,7 @@
     </style>
 </head>
 <body>
-    <div id="menu">Up/Down Font Size: 24 | Left/Right Fade Rate: 1000ms</div>
+    <div id="menu">Up/Down Font Size: 50 | Left/Right Fade Rate: 1000ms</div>
     <div id="message">Press 'M' to start transcription</div>
     <div id="transcription"></div>
 
@@ -93,11 +93,12 @@ const toSentenceCase = (str) => {
                 isNewSentence = false;  // We've capitalized the first word, so turn off flag
             }
 ///removed space here
-            interimTranscript += transcriptText + '';
+            interimTranscript += transcriptText + ' ';
 
             // If this is a final result, reset the flag for the next sentence
         
             if (event.results[i].isFinal) {
+                    interimTranscript -= ' ';  // remove space at the end of the sentence (optional)
                 interimTranscript += '.';  // Add period for the end of the sentence (optional)
                 isNewSentence = true;  // Ready to start a new sentence
             }

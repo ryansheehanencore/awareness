@@ -1,107 +1,93 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-time Voice Transcription Display</title>
-    <style>
-        body {
-            background-color: black;
-            color: white;
-            font-size: 24px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            margin: 0;
-            overflow: hidden;
-        }
-        #transcription {
-            text-align: center;
-            white-space: pre-wrap;
-        }
-        #menu {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            opacity: 0;
-            transition: opacity 1s;
-        }
-    </style>
-</head>
-<body>
-    <div id="menu">Up/Down Font Size: 24<br>Left/Right Fade Rate: 1000</div>
-    <div id="transcription">Press 'M' to unmute</div>
-    <script>
-        let transcription = document.getElementById('transcription');
-        let menu = document.getElementById('menu');
-        let fontSize = 24;
-        let fadeRate = 1000;
-        let recognizing = false;
-        let recognition;
+// Constants
+const FADE_IN_DURATION = 125;
+const FADE_OUT_DURATION = 1000;
+const PAUSE_DURATION = 500;
+const MENU_DURATION = 1000;
+const FONT_SIZE_STEP = 2;
+const FADE_RATE_STEP = 50;
 
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new webkitSpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
+// Variables
+let isMuted = true;
+let transcriptionElement = document.getElementById('transcription');
+let speechRecognition = new webkitSpeechRecognition();
+let currentPhrase = '';
+let fadeTimeout;
+let menuTimeout;
+let fontSize = 24;
+let fadeRate = FADE_OUT_DURATION;
 
-            recognition.onresult = function(event) {
-                let interim_transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        interim_transcript += event.results[i].transcript + ' ';
-                    }
-                }
-                displayTranscription(interim_transcript);
-            };
+// Functions
+function startSpeechRecognition() {
+    speechRecognition.start();
+}
 
-            recognition.onend = function() {
-                if (recognizing) {
-                    recognition.start();
-                }
-            };
-        }
+function stopSpeechRecognition() {
+    speechRecognition.stop();
+}
 
-        function displayTranscription(text) {
-            transcription.innerText = text;
-            transcription.style.opacity = 1;
+function handleSpeechEvent(event) {
+    if (event.type === 'result') {
+        const transcript = event.results[event.results.length - 1][0].transcript;
+        currentPhrase += transcript;
+        transcriptionElement.textContent = currentPhrase;
+        clearTimeout(fadeTimeout);
+        fadeTimeout = setTimeout(() => {
+            transcriptionElement.style.opacity = 0;
             setTimeout(() => {
-                transcription.style.opacity = 0;
-            }, fadeRate);
-        }
+                transcriptionElement.textContent = '';
+                currentPhrase = '';
+            }, FADE_OUT_DURATION);
+        }, PAUSE_DURATION);
+    }
+}
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'm' || event.key === 'M') {
-                if (!recognizing) {
-                    recognition.start();
-                    recognizing = true;
-                    transcription.innerText = '';
-                }
-            } else if (event.key === 'ArrowUp') {
-                fontSize += 2;
-                document.body.style.fontSize = fontSize + 'px';
-                showMenu();
-            } else if (event.key === 'ArrowDown') {
-                fontSize -= 2;
-                document.body.style.fontSize = fontSize + 'px';
-                showMenu();
-            } else if (event.key === 'ArrowLeft') {
-                fadeRate += 100;
-                showMenu();
-            } else if (event.key === 'ArrowRight') {
-                fadeRate -= 100;
-                showMenu();
-            }
-        });
-
-        function showMenu() {
-            menu.innerHTML = `Up/Down Font Size: ${fontSize}<br>Left/Right Fade Rate: ${fadeRate}`;
-            menu.style.opacity = 1;
-            setTimeout(() => {
-                menu.style.opacity = 0;
-            }, 1000);
+function handleKeyPress(event) {
+    if (event.key === 'M') {
+        isMuted = !isMuted;
+        if (!isMuted) {
+            startSpeechRecognition();
+        } else {
+            stopSpeechRecognition();
         }
-    </script>
-</body>
-</html>
+    } else if (event.key === 'ArrowUp') {
+        fontSize += FONT_SIZE_STEP;
+        transcriptionElement.style.fontSize = fontSize + 'px';
+        showMenu();
+    } else if (event.key === 'ArrowDown') {
+        fontSize -= FONT_SIZE_STEP;
+        transcriptionElement.style.fontSize = fontSize + 'px';
+        showMenu();
+    } else if (event.key === 'ArrowLeft') {
+        fadeRate -= FADE_RATE_STEP;
+        showMenu();
+    } else if (event.key === 'ArrowRight') {
+        fadeRate += FADE_RATE_STEP;
+        showMenu();
+    }
+}
+
+function showMenu() {
+    const menu = document.createElement('div');
+    menu.textContent = `Up/Down Font Size: ${fontSize}  Left/Right Fade Rate: ${fadeRate}`;
+    menu.style.position = 'absolute';
+    menu.style.top = '0';
+    menu.style.left = '0';
+    menu.style.backgroundColor = 'black';
+    menu.style.color = 'white';
+    document.body.appendChild(menu);
+    clearTimeout(menuTimeout);
+    menuTimeout = setTimeout(() => {
+        menu.remove();
+    }, MENU_DURATION);
+}
+
+// Event listeners
+speechRecognition.onresult = handleSpeechEvent;
+window.addEventListener('keypress', handleKeyPress);
+
+// Initial microphone permission request
+if ('webkitSpeechRecognition' in window) {
+    startSpeechRecognition();
+} else {
+    console.log('Web Speech API is not supported.');
+}

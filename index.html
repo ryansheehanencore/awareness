@@ -41,12 +41,15 @@
                     transcript += event.results[i].transcript;
                 }
                 transcriptionDiv.innerHTML = transcript;
+                lastUpdateTime = Date.now();
+                transcriptionDiv.style.opacity = 1;
             };
             recognition.onerror = (event) => {
                 console.error('Speech recognition error detected: ' + event.error);
             };
             recognition.onend = () => {
                 console.log('Speech recognition service disconnected');
+                recognition.start(); // Restart recognition service
             };
             recognition.start();
         }

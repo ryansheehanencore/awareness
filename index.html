@@ -32,7 +32,6 @@
             width: 100%;
             left: 0;
             transition: opacity 1s;
-            opacity: 0;
         }
         .word {
             display: inline-block;
@@ -87,7 +86,9 @@
         let currentLine = 1;
         let fadeOutTimeout;
         let selectedMicrophoneId = null;
-        let lastProcessedIndex = 0;
+        let lastTranscript = '';
+        let silenceStart = null;
+        let isTransitioning = false;
 
         function initSpeechRecognition() {
             if (recognition) {
@@ -104,54 +105,64 @@
             recognition.start();
         }
 
+        function updateText(transcript, isFinal) {
+            const currentLineElement = document.querySelector(`#line${currentLine} .text-content`);
+            
+            // Only update if the transcript has changed
+            if (transcript !== lastTranscript) {
+                currentLineElement.style.fontSize = `${fontSize}px`;
+                
+                // Split transcript into words
+                const words = transcript.split(' ');
+                const existingWords = currentLineElement.querySelectorAll('.word').length;
+                
+                // Update HTML only if we have new words
+                if (words.length > existingWords || isFinal) {
+                    let html = '';
+                    words.forEach(word => {
+                        html += `<span class="word">${word} </span>`;
+                    });
+                    currentLineElement.innerHTML = html;
+                    
+                    // Fade in all words
+                    currentLineElement.querySelectorAll('.word').forEach((wordEl, index) => {
+                        if (index >= existingWords) {
+                            setTimeout(() => {
+                                wordEl.style.opacity = 1;
+                            }, 50 * (index - existingWords));
+                        } else {
+                            wordEl.style.opacity = 1;
+                        }
+                    });
+                }
+                
+                lastTranscript = transcript;
+                silenceStart = null;
+            }
+
+            if (isFinal && !isTransitioning) {
+                isTransitioning = true;
+                fadeOutTimeout = setTimeout(() => {
+                    const lineToFade = document.querySelector(`#line${currentLine} .text-content`);
+                    lineToFade.style.transition = `opacity ${fadeOutDuration}ms`;
+                    lineToFade.style.opacity = 0;
+                    
+                    setTimeout(() => {
+                        currentLine = currentLine === 1 ? 2 : 1;
+                        lastTranscript = '';
+                        isTransitioning = false;
+                    }, fadeOutDuration);
+                }, fadeOutDelay);
+            }
+        }
+
         function handleRecognitionResult(event) {
-            clearTimeout(fadeOutTimeout);
+            if (isTransitioning) return;
             
             const result = event.results[event.results.length - 1];
             const transcript = result[0].transcript;
             
-            const currentLineElement = document.querySelector(`#line${currentLine} .text-content`);
-            const otherLineElement = document.querySelector(`#line${currentLine === 1 ? 2 : 1} .text-content`);
-            
-            currentLineElement.style.fontSize = `${fontSize}px`;
-            
-            // Split transcript into words and create/update word spans
-            const words = transcript.split(' ');
-            let html = '';
-            words.forEach((word, index) => {
-                html += `<span class="word">${word} </span>`;
-            });
-            currentLineElement.innerHTML = html;
-            
-            // Fade in new words
-            const wordElements = currentLineElement.querySelectorAll('.word');
-            wordElements.forEach((wordEl, index) => {
-                if (index >= lastProcessedIndex) {
-                    setTimeout(() => {
-                        wordEl.style.opacity = 1;
-                    }, 50 * (index - lastProcessedIndex));
-                } else {
-                    wordEl.style.opacity = 1;
-                }
-            });
-            lastProcessedIndex = wordElements.length;
-            
-            // Ensure the line is visible
-            currentLineElement.style.opacity = 1;
-
-            if (result.isFinal) {
-                // Set up fade out for the completed phrase
-                fadeOutTimeout = setTimeout(() => {
-                    currentLineElement.style.transition = `opacity ${fadeOutDuration}ms`;
-                    currentLineElement.style.opacity = 0;
-                    
-                    setTimeout(() => {
-                        // Switch lines after fade out
-                        currentLine = currentLine === 1 ? 2 : 1;
-                        lastProcessedIndex = 0;
-                    }, fadeOutDuration);
-                }, fadeOutDelay);
-            }
+            updateText(transcript, result.isFinal);
         }
 
         function handleRecognitionEnd() {

@@ -1,6 +1,3 @@
-
-
-```javascript
 let fontSize = 50; // Default font size
 let fadeDuration = 500; // Default fade duration in ms
 let fadeTimeout; // Timeout to manage fade delay
@@ -81,4 +78,3 @@ document.addEventListener('keydown', (event) => {
 window.onload = () => {
   startTranscription();
 };
-```

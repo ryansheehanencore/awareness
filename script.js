@@ -28,7 +28,7 @@ async function startTranscription() {
     console.error("Microphone access denied or unavailable", error);
   }
 }
-
+console.log("Script loaded successfully");
 function displayText(text) {
   console.log("Displaying text: ", text); // Log the text to be displayed
   clearTimeout(fadeTimeout);

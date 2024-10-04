@@ -74,35 +74,43 @@
             transcript.style.opacity = 0;
         };
 
-        const toSentenceCase = (str) => {
+        let isNewSentence = true;  // Flag to track whether we are starting a new sentence
+
+const toSentenceCase = (str) => {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-        };
+};
 
 
-        const handleTranscription = (event) => {
-            if (!isMuted) {
-                let interimTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const result = event.results[i];
-                    let transcriptText = result[0].transcript.trim();
-                    //interimTranscript += result[0].transcript.trim() + ' ';
+      const handleTranscription = (event) => {
+    if (!isMuted) {
+        let interimTranscript = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            let transcriptText = event.results[i][0].transcript.trim();
 
-                    // Capitalize the first letter
-           interimTranscript += toSentenceCase(transcriptText) + ' ';
-                    
-                    if (result.isFinal) {
-                        interimTranscript = '';  // Reset for final transcripts
-                    }
-                }
-                if (interimTranscript) {
-                    transcript.innerHTML = interimTranscript.trim();
-                    transcript.style.fontSize = `${fontSize}px`;
-                    transcript.style.opacity = 1;
-                    clearTimeout(fadeOutTimeout);
-                    fadeOutTimeout = setTimeout(fadeOutText, 5000);
-                }
+            // Check if we're at the start of a sentence
+            if (isNewSentence) {
+                transcriptText = toSentenceCase(transcriptText);  // Only capitalize the first word
+                isNewSentence = false;  // We've capitalized the first word, so turn off flag
             }
-        };
+
+            interimTranscript += transcriptText + ' ';
+
+            // If this is a final result, reset the flag for the next sentence
+            if (event.results[i].isFinal) {
+                interimTranscript += '.';  // Add period for the end of the sentence (optional)
+                isNewSentence = true;  // Ready to start a new sentence
+            }
+        }
+
+        if (interimTranscript) {
+            transcript.innerHTML = interimTranscript.trim();
+            transcript.style.fontSize = `${fontSize}px`;
+            transcript.style.opacity = 1;
+            clearTimeout(fadeOutTimeout);
+            fadeOutTimeout = setTimeout(fadeOutText, 500);
+        }
+    }
+};
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = true;

@@ -36,11 +36,13 @@
             recognition.onresult = (event) => {
                 let transcript = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    console.log(event.results[i].transcript); // Log each result
+                    let result = event.results[i].transcript;
+                    console.log('Result:', result); // Log each result
                     if (event.results[i].isFinal) {
-                        transcript += event.results[i].transcript + ' ';
+                        transcript += result + ' ';
                     }
                 }
+                console.log('Transcript:', transcript); // Log the final transcript
                 transcriptionDiv.innerHTML = transcript;
             };
             recognition.onerror = (event) => {

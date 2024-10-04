@@ -50,7 +50,9 @@
             };
             recognition.onend = () => {
                 console.log('Speech recognition service disconnected');
-                recognition.start(); // Restart recognition service
+                setTimeout(() => {
+                    recognition.start(); // Restart recognition service after a short delay
+                }, 1000);
             };
             recognition.start();
         }

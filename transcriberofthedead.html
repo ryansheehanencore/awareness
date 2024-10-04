@@ -92,10 +92,11 @@ const toSentenceCase = (str) => {
                 transcriptText = toSentenceCase(transcriptText);  // Only capitalize the first word
                 isNewSentence = false;  // We've capitalized the first word, so turn off flag
             }
-
-            interimTranscript += transcriptText + ' ';
+///removed space here
+            interimTranscript += transcriptText + '';
 
             // If this is a final result, reset the flag for the next sentence
+        
             if (event.results[i].isFinal) {
                 interimTranscript += '.';  // Add period for the end of the sentence (optional)
                 isNewSentence = true;  // Ready to start a new sentence

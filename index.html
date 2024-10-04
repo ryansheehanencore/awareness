@@ -42,6 +42,12 @@
                 }
                 transcriptionDiv.innerHTML = transcript;
             };
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error detected: ' + event.error);
+            };
+            recognition.onend = () => {
+                console.log('Speech recognition service disconnected');
+            };
             recognition.start();
         }
 
@@ -80,12 +86,6 @@
             requestAnimationFrame(fadeOutText);
         }
         fadeOutText();
-
-        recognition.onend = () => {
-            transcriptionDiv.style.opacity = 1;
-            lastUpdateTime = Date.now();
-            recognition.start();
-        };
     </script>
 </body>
 </html>

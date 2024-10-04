@@ -61,7 +61,7 @@
         let message = document.getElementById('message');
         let menu = document.getElementById('menu');
         let fontSize = 50;
-        let fadeRate = 1000;
+        let fadeRate = 1500;
 
         const updateMenu = () => {
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
@@ -77,7 +77,7 @@
         let isNewSentence = true;  // Flag to track whether we are starting a new sentence
 
 const toSentenceCase = (str) => {
-    return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+    return str.charAt(0).toUpperCase() //+ str.slice(1).toLowerCase()//;
 };
 
 

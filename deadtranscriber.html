@@ -54,6 +54,7 @@
         let fontSize = 24;
         let fadeRate = 1000;
         let currentLines = [];  // Array to store the two lines currently displayed
+        let previousWords = ''; // To track interim words and avoid duplication
 
         const updateMenu = () => {
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
@@ -85,15 +86,27 @@
 
         const handleTranscription = (event) => {
             if (!isMuted) {
+                let currentTranscription = ''; // Track current phrase
+
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     const result = event.results[i];
-                    if (result[0].transcript.trim() !== '') {
-                        let words = result[0].transcript.trim().split(' ');
-                        words.forEach(word => addWordToLine(word));
-                    }
+                    let words = result[0].transcript.trim();
+
                     if (result.isFinal) {
+                        addWordToLine(words);  // Add the final words to the display
+                        previousWords = ''; // Clear the interim words when final
+                    } else {
+                        currentTranscription += words;
+                        if (currentTranscription !== previousWords) {
+                            addWordToLine(words);  // Only add new interim words
+                            previousWords = currentTranscription; // Track interim words
+                        }
+                    }
+
+                    if (result.isFinal) {
+                        // Clear the lines after a pause
                         setTimeout(() => {
-                            currentLines = [];  // Clear after final result to start fresh
+                            currentLines = [];
                             transcript.style.opacity = 0;
                         }, fadeRate);
                     }

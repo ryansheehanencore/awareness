@@ -60,6 +60,7 @@
         function selectMicrophone() {
             navigator.mediaDevices.getUserMedia({ audio: true })
                 .then(stream => {
+                    console.log('Microphone access granted');
                     startRecognition();
                 })
                 .catch(err => {

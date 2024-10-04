@@ -53,17 +53,18 @@
 
                 const currentPhrase = transcript.trim();
 
-                if (currentPhrase !== lastPhrase) {
-                    lastPhrase = currentPhrase;
-                    clearTimeout(fadeTimeout);
-                    displayText(currentPhrase);
-                    fadeTimeout = setTimeout(() => fadeOutText(), 500);
+                // Update text only if the current phrase differs from the last phrase
+                if (currentPhrase !== lastPhrase && currentPhrase !== '') {
+                    clearTimeout(fadeTimeout); // Clear the previous fade-out timeout
+                    displayText(currentPhrase); // Display the new phrase
+                    lastPhrase = currentPhrase; // Update lastPhrase
+                    fadeTimeout = setTimeout(() => fadeOutText(), 500); // Start fade-out after 500ms of silence
                 }
             };
 
             recognition.onend = () => {
                 console.log('Speech recognition ended. Restarting...');
-                recognition.start();
+                recognition.start(); // Restart recognition
             };
 
             recognition.onerror = (event) => {
@@ -74,14 +75,15 @@
         }
 
         function displayText(text) {
-            transcriptDiv.textContent = text;  // Display the current phrase
-            transcriptDiv.style.opacity = 1;    // Reset opacity for new text
+            transcriptDiv.textContent = text; // Display the current phrase
+            transcriptDiv.style.opacity = 1; // Reset opacity for new text
         }
 
         function fadeOutText() {
-            transcriptDiv.style.opacity = 0;     // Start fade out
+            transcriptDiv.style.opacity = 0; // Start fade out
             setTimeout(() => {
-                transcriptDiv.textContent = '';   // Clear text after fade out
+                transcriptDiv.textContent = ''; // Clear text after fade out
+                lastPhrase = ''; // Reset lastPhrase to ensure old phrases do not reappear
             }, fadeDuration);
         }
 

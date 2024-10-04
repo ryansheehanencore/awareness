@@ -33,27 +33,30 @@
             recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.continuous = true;
             recognition.interimResults = true;
+            recognition.lang = 'en-US'; // Set language to English (US)
+            
             recognition.onresult = (event) => {
                 let transcript = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    let result = event.results[i].transcript;
-                    console.log('Result:', result); // Log each result
                     if (event.results[i].isFinal) {
-                        transcript += result + ' ';
+                        transcript += event.results[i].transcript + ' ';
                     }
                 }
                 console.log('Transcript:', transcript); // Log the final transcript
                 transcriptionDiv.innerHTML = transcript;
             };
+
             recognition.onerror = (event) => {
                 console.error('Speech recognition error detected: ' + event.error);
             };
+
             recognition.onend = () => {
                 console.log('Speech recognition service disconnected');
                 setTimeout(() => {
                     recognition.start(); // Restart recognition service after a short delay
                 }, 1000);
             };
+
             recognition.start();
         }
 

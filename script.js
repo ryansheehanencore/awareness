@@ -4,10 +4,16 @@ let fadeTimeout; // Timeout to manage fade delay
 let textBox = document.getElementById('transcription-text');
 let recognition = null;
 
+// Debugging: Log that the script has loaded
+console.log("Script loaded and ready to run.");
+
 // Request microphone permission and initialize speech recognition
 async function startTranscription() {
   try {
+    console.log("Requesting microphone permission...");
     await navigator.mediaDevices.getUserMedia({ audio: true });
+    console.log("Microphone permission granted.");
+    
     recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.continuous = true;
     recognition.interimResults = true;
@@ -18,6 +24,7 @@ async function startTranscription() {
       for (let i = event.resultIndex; i < event.results.length; ++i) {
         if (event.results[i].isFinal) {
           transcript = event.results[i][0].transcript;
+          console.log("Transcription: ", transcript); // Debugging: Log the transcription
         }
       }
 
@@ -26,7 +33,12 @@ async function startTranscription() {
       }
     };
 
+    recognition.onerror = (event) => {
+      console.error("Speech recognition error: ", event.error);
+    };
+
     recognition.start();
+    console.log("Speech recognition started.");
   } catch (error) {
     console.error("Microphone access denied or unavailable", error);
   }
@@ -76,5 +88,6 @@ document.addEventListener('keydown', (event) => {
 
 // Initialize transcription on page load
 window.onload = () => {
+  console.log("Page loaded, initializing transcription...");
   startTranscription();
 };

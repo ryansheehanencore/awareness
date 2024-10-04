@@ -31,18 +31,20 @@
 <body>
     <div id="transcript">Initializing...</div>
     <div id="controls">
-        Font Size: <span id="fontSizeDisplay">50</span>px<br>
-        Fade Duration: <span id="fadeDurationDisplay">500</span>ms
+        Up/Down Arrow: Font Size: <span id="fontSizeDisplay">50</span>px<br>
+        Left/Right Arrow: Fade Duration: <span id="fadeDurationDisplay">500</span>ms
     </div>
     <script>
         let selectedMic = null;
         let transcriptElement = document.getElementById('transcript');
+        let controlsElement = document.getElementById('controls');
         let fontSizeDisplay = document.getElementById('fontSizeDisplay');
         let fadeDurationDisplay = document.getElementById('fadeDurationDisplay');
         let recognition;
         let fontSize = 50;
         let fadeDuration = 500;
         let timeoutId;
+        let firstWordDetected = false;
 
         function startTranscription() {
             recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -72,6 +74,13 @@
             transcriptElement.style.transition = `opacity ${fadeDuration / 1000}s`; // Apply fade duration
 
             if (text.trim()) {
+                if (!firstWordDetected) {
+                    firstWordDetected = true;
+                    controlsElement.style.transition = 'opacity 1s';
+                    controlsElement.style.opacity = '0';
+                    setTimeout(() => controlsElement.style.display = 'none', 1000);
+                }
+
                 timeoutId = setTimeout(() => {
                     transcriptElement.style.opacity = '0';
                     setTimeout(() => {

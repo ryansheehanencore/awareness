@@ -74,32 +74,31 @@
             transcript.style.opacity = 0;
         };
 
-        let isNewSentence = true;  // Flag to track whether we are starting a new sentence
+       let isNewSentence = true;  // Flag to track if a new sentence is starting
 
 const toSentenceCase = (str) => {
-    return str.charAt(0).toUpperCase() + str.slice(1);  // Properly capitalize the first letter and leave the rest unchanged
+    return str.charAt(0).toUpperCase() + str.slice(1);
 };
 
-
-
-     const handleTranscription = (event) => {
+const handleTranscription = (event) => {
     if (!isMuted) {
         let interimTranscript = '';
         for (let i = event.resultIndex; i < event.results.length; i++) {
             let transcriptText = event.results[i][0].transcript.trim();
 
-            // Check if we're at the start of a sentence
+            // Check if it's a new sentence, and capitalize the first word
             if (isNewSentence) {
-               transcriptText = toSentenceCase(transcriptText);  // Only capitalize the first word
-               isNewSentence = false;  // We've capitalized the first word, so turn off flag
+                transcriptText = toSentenceCase(transcriptText);
+                isNewSentence = false;
             }
 
-            // If this is a final result, add the transcript text and a period
+            // If the result is final, add a period and prepare for the next sentence
             if (event.results[i].isFinal) {
-                interimTranscript += transcriptText.trim() + '.';  // Add period for the end of the sentence
-                isNewSentence = true;  // Ready to start a new sentence
+                interimTranscript += transcriptText + '. ';
+                isNewSentence = true;  // Prepare for a new sentence
             } else {
-                interimTranscript += transcriptText + ' ';  // For interim results, add space
+                // For interim results, just append text
+                interimTranscript += transcriptText + ' ';
             }
         }
 

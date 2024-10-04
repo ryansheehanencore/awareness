@@ -43,7 +43,7 @@
                     }
                 }
                 console.log('Transcript:', transcript); // Log the final transcript
-                transcriptionDiv.innerHTML = transcript;
+                transcriptionDiv.innerHTML = transcript || 'No speech detected';
             };
 
             recognition.onerror = (event) => {

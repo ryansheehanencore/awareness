@@ -4,11 +4,18 @@ let fadeTimeout; // Timeout to manage fade delay
 let textBox = document.getElementById('transcription-text');
 let recognition = null;
 
+// Check if SpeechRecognition is supported
+if (!('SpeechRecognition' in window) && !('webkitSpeechRecognition' in window)) {
+  alert('Speech Recognition API is not supported in this browser.');
+} else {
+  recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+}
+
 // Request microphone permission and initialize speech recognition
 async function startTranscription() {
   try {
     await navigator.mediaDevices.getUserMedia({ audio: true });
-    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+
     recognition.continuous = true;
     recognition.interimResults = true;
     recognition.lang = 'en-US';

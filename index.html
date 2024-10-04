@@ -20,13 +20,25 @@
             text-align: center;
             font-size: 50px;
         }
+        #controls {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 18px;
+        }
     </style>
 </head>
 <body>
     <div id="transcript">Initializing...</div>
+    <div id="controls">
+        Font Size: <span id="fontSizeDisplay">50</span>px<br>
+        Fade Duration: <span id="fadeDurationDisplay">500</span>ms
+    </div>
     <script>
         let selectedMic = null;
         let transcriptElement = document.getElementById('transcript');
+        let fontSizeDisplay = document.getElementById('fontSizeDisplay');
+        let fadeDurationDisplay = document.getElementById('fadeDurationDisplay');
         let recognition;
         let fontSize = 50;
         let fadeDuration = 500;
@@ -76,13 +88,17 @@
             } else if (event.key === 'ArrowUp') {
                 fontSize += 2;
                 transcriptElement.style.fontSize = fontSize + 'px';
+                fontSizeDisplay.textContent = fontSize;
             } else if (event.key === 'ArrowDown') {
                 fontSize -= 2;
                 transcriptElement.style.fontSize = fontSize + 'px';
+                fontSizeDisplay.textContent = fontSize;
             } else if (event.key === 'ArrowLeft') {
                 fadeDuration -= 50;
+                fadeDurationDisplay.textContent = fadeDuration;
             } else if (event.key === 'ArrowRight') {
                 fadeDuration += 50;
+                fadeDurationDisplay.textContent = fadeDuration;
             }
         });
 

@@ -65,23 +65,27 @@
 
         const handleTranscription = (event) => {
             if (!isMuted) {
-                const results = event.results[event.resultIndex];
-                if (results.isFinal) {
-                    const phrase = results[0].transcript.trim();
-                    if (phrase) {
-                        transcript.innerHTML = phrase;
-                        transcript.style.fontSize = `${fontSize}px`;
-                        transcript.style.opacity = 1;
-                        clearTimeout(fadeOutTimeout);
-                        fadeOutTimeout = setTimeout(fadeOutText, 500);
+                let interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    const result = event.results[i];
+                    interimTranscript += result[0].transcript.trim() + ' ';
+                    if (result.isFinal) {
+                        interimTranscript = '';  // Reset for final transcripts
                     }
+                }
+                if (interimTranscript) {
+                    transcript.innerHTML = interimTranscript.trim();
+                    transcript.style.fontSize = `${fontSize}px`;
+                    transcript.style.opacity = 1;
+                    clearTimeout(fadeOutTimeout);
+                    fadeOutTimeout = setTimeout(fadeOutText, 500);
                 }
             }
         };
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.interimResults = true;  // Enable interim results
         recognition.onresult = handleTranscription;
 
         let fadeOutTimeout;
@@ -122,3 +126,4 @@
     </script>
 </body>
 </html>
+

@@ -23,9 +23,21 @@
             max-width: 800px;
         }
         .text-line {
-            transition: opacity 0.5s;
-            margin: 10px 0;
             min-height: 60px;
+            position: relative;
+            margin: 10px 0;
+        }
+        .text-content {
+            position: absolute;
+            width: 100%;
+            left: 0;
+            transition: opacity 1s;
+            opacity: 0;
+        }
+        .word {
+            display: inline-block;
+            opacity: 0;
+            transition: opacity 0.15s;
         }
         #microphone-modal {
             display: none;
@@ -54,8 +66,12 @@
 </head>
 <body>
     <div id="transcription-container">
-        <div id="line1" class="text-line"></div>
-        <div id="line2" class="text-line"></div>
+        <div id="line1" class="text-line">
+            <div class="text-content"></div>
+        </div>
+        <div id="line2" class="text-line">
+            <div class="text-content"></div>
+        </div>
     </div>
 
     <div id="microphone-modal">
@@ -66,14 +82,13 @@
     <script>
         let recognition;
         let fontSize = 50;
-        let fadeOutTime = 500;
+        let fadeOutDelay = 500;
+        let fadeOutDuration = 1000;
         let currentLine = 1;
         let fadeOutTimeout;
         let selectedMicrophoneId = null;
-        let lastResult = '';
-        let lastResultTime = Date.now();
+        let lastProcessedIndex = 0;
 
-        // Initialize speech recognition
         function initSpeechRecognition() {
             if (recognition) {
                 recognition.stop();
@@ -95,43 +110,51 @@
             const result = event.results[event.results.length - 1];
             const transcript = result[0].transcript;
             
-            if (transcript !== lastResult) {
-                lastResult = transcript;
-                lastResultTime = Date.now();
-                
-                const currentLineElement = document.getElementById(`line${currentLine}`);
-                const otherLineElement = document.getElementById(`line${currentLine === 1 ? 2 : 1}`);
-                
-                currentLineElement.style.fontSize = `${fontSize}px`;
-                currentLineElement.textContent = transcript;
-                currentLineElement.style.opacity = 1;
-                
-                // Start fading out the other line if it has content
-                if (otherLineElement.textContent) {
-                    otherLineElement.style.opacity = 0;
+            const currentLineElement = document.querySelector(`#line${currentLine} .text-content`);
+            const otherLineElement = document.querySelector(`#line${currentLine === 1 ? 2 : 1} .text-content`);
+            
+            currentLineElement.style.fontSize = `${fontSize}px`;
+            
+            // Split transcript into words and create/update word spans
+            const words = transcript.split(' ');
+            let html = '';
+            words.forEach((word, index) => {
+                html += `<span class="word">${word} </span>`;
+            });
+            currentLineElement.innerHTML = html;
+            
+            // Fade in new words
+            const wordElements = currentLineElement.querySelectorAll('.word');
+            wordElements.forEach((wordEl, index) => {
+                if (index >= lastProcessedIndex) {
                     setTimeout(() => {
-                        otherLineElement.textContent = '';
-                    }, fadeOutTime);
+                        wordEl.style.opacity = 1;
+                    }, 50 * (index - lastProcessedIndex));
+                } else {
+                    wordEl.style.opacity = 1;
                 }
-            }
+            });
+            lastProcessedIndex = wordElements.length;
+            
+            // Ensure the line is visible
+            currentLineElement.style.opacity = 1;
 
             if (result.isFinal) {
-                // Switch to the other line for the next phrase
-                currentLine = currentLine === 1 ? 2 : 1;
-                
                 // Set up fade out for the completed phrase
                 fadeOutTimeout = setTimeout(() => {
-                    const lineToFade = document.getElementById(`line${currentLine === 1 ? 2 : 1}`);
-                    lineToFade.style.opacity = 0;
+                    currentLineElement.style.transition = `opacity ${fadeOutDuration}ms`;
+                    currentLineElement.style.opacity = 0;
+                    
                     setTimeout(() => {
-                        lineToFade.textContent = '';
-                    }, fadeOutTime);
-                }, 500);
+                        // Switch lines after fade out
+                        currentLine = currentLine === 1 ? 2 : 1;
+                        lastProcessedIndex = 0;
+                    }, fadeOutDuration);
+                }, fadeOutDelay);
             }
         }
 
         function handleRecognitionEnd() {
-            // Restart recognition if it ends
             setTimeout(() => {
                 try {
                     recognition.start();
@@ -142,7 +165,6 @@
             }, 1000);
         }
 
-        // Handle microphone selection
         async function setupMicrophoneSelection() {
             const devices = await navigator.mediaDevices.enumerateDevices();
             const microphones = devices.filter(device => device.kind === 'audioinput');
@@ -161,20 +183,25 @@
             });
         }
 
-        // Event listeners
         document.addEventListener('keydown', (event) => {
             switch(event.key) {
                 case 'ArrowUp':
                     fontSize = Math.min(fontSize + 5, 100);
+                    document.querySelectorAll('.text-content').forEach(el => {
+                        el.style.fontSize = `${fontSize}px`;
+                    });
                     break;
                 case 'ArrowDown':
                     fontSize = Math.max(fontSize - 5, 20);
+                    document.querySelectorAll('.text-content').forEach(el => {
+                        el.style.fontSize = `${fontSize}px`;
+                    });
                     break;
                 case 'ArrowLeft':
-                    fadeOutTime = Math.max(fadeOutTime - 100, 100);
+                    fadeOutDuration = Math.max(fadeOutDuration - 100, 500);
                     break;
                 case 'ArrowRight':
-                    fadeOutTime = Math.min(fadeOutTime + 100, 2000);
+                    fadeOutDuration = Math.min(fadeOutDuration + 100, 2000);
                     break;
                 case 'm':
                 case 'M':
@@ -184,7 +211,6 @@
             }
         });
 
-        // Initialize
         navigator.mediaDevices.getUserMedia({ audio: true })
             .then(() => {
                 setupMicrophoneSelection();

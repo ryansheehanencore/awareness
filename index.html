@@ -27,7 +27,6 @@
     <script>
         const transcriptDiv = document.getElementById('transcript');
         let recognition;
-        let lastPhrase = ''; // Store the last displayed phrase
         let fadeTimeout;
         let fadeDuration = 500; // Default fade-out duration
 
@@ -53,11 +52,10 @@
 
                 const currentPhrase = transcript.trim();
 
-                // Update text only if the current phrase differs from the last phrase
-                if (currentPhrase !== lastPhrase && currentPhrase !== '') {
+                // Only display if there's a new valid phrase
+                if (currentPhrase !== '' && transcriptDiv.textContent !== currentPhrase) {
                     clearTimeout(fadeTimeout); // Clear the previous fade-out timeout
                     displayText(currentPhrase); // Display the new phrase
-                    lastPhrase = currentPhrase; // Update lastPhrase
                     fadeTimeout = setTimeout(() => fadeOutText(), 500); // Start fade-out after 500ms of silence
                 }
             };
@@ -83,7 +81,6 @@
             transcriptDiv.style.opacity = 0; // Start fade out
             setTimeout(() => {
                 transcriptDiv.textContent = ''; // Clear text after fade out
-                lastPhrase = ''; // Reset lastPhrase to ensure old phrases do not reappear
             }, fadeDuration);
         }
 

@@ -74,14 +74,14 @@
         }
 
         function displayText(text) {
-            transcriptDiv.textContent = text;
-            transcriptDiv.style.opacity = 1; // Reset opacity for new text
+            transcriptDiv.textContent = text;  // Display the current phrase
+            transcriptDiv.style.opacity = 1;    // Reset opacity for new text
         }
 
         function fadeOutText() {
-            transcriptDiv.style.opacity = 0;
+            transcriptDiv.style.opacity = 0;     // Start fade out
             setTimeout(() => {
-                transcriptDiv.textContent = ''; // Clear text after fade out
+                transcriptDiv.textContent = '';   // Clear text after fade out
             }, fadeDuration);
         }
 

@@ -23,7 +23,7 @@
             font-size: 50px;
             opacity: 0;
             ///change timeout of old phrases
-            transition: opacity 5s;
+            transition: opacity 1s;
             word-wrap: break-word;
             max-width: 90vw;
         }
@@ -67,7 +67,7 @@
         const updateMenu = () => {
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
             menu.classList.add('visible');
-            setTimeout(() => menu.classList.remove('visible'), 5000);
+            setTimeout(() => menu.classList.remove('visible'), 500);
         };
 
         const fadeOutText = () => {
@@ -108,7 +108,7 @@ const toSentenceCase = (str) => {
             transcript.style.fontSize = `${fontSize}px`;
             transcript.style.opacity = 1;
             clearTimeout(fadeOutTimeout);
-            fadeOutTimeout = setTimeout(fadeOutText, 500);
+            fadeOutTimeout = setTimeout(fadeOutText, 5000);
         }
     }
 };

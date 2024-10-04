@@ -28,6 +28,8 @@
     <script>
         let recognition;
         let transcriptionDiv = document.getElementById('transcription');
+        let fontSize = 50;
+        let fadeOutTime = 500;
 
         function startRecognition() {
             recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
@@ -38,7 +40,7 @@
             recognition.onresult = (event) => {
                 let transcript = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
+                    if (event.results[i].transcript) {
                         transcript += event.results[i].transcript + ' ';
                     }
                 }
@@ -74,8 +76,29 @@
         document.addEventListener('keydown', (event) => {
             if (event.key === 'M' || event.key === 'm') {
                 selectMicrophone();
+            } else if (event.key === 'ArrowUp') {
+                fontSize += 5;
+                transcriptionDiv.style.fontSize = fontSize + 'px';
+            } else if (event.key === 'ArrowDown') {
+                fontSize -= 5;
+                transcriptionDiv.style.fontSize = fontSize + 'px';
+            } else if (event.key === 'ArrowLeft') {
+                fadeOutTime -= 100;
+            } else if (event.key === 'ArrowRight') {
+                fadeOutTime += 100;
             }
         });
+
+        let lastUpdateTime = Date.now();
+        function fadeOutText() {
+            if (Date.now() - lastUpdateTime > 500) {
+                transcriptionDiv.style.transition = `opacity ${fadeOutTime}ms`;
+                transcriptionDiv.style.opacity = 0;
+            }
+            requestAnimationFrame(fadeOutText);
+        }
+        fadeOutText();
     </script>
 </body>
 </html>
+

@@ -6,426 +6,128 @@
     <title>Real-Time Audio Transcription</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            background-color: black;
-            color: white;<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-Time Audio Transcription</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
             background-color: black;
             color: white;
             font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
             overflow: hidden;
         }
-        #transcription-container {
+        #transcript {
             text-align: center;
-            width: 80%;
-            max-width: 800px;
-        }
-        .text-line {
-            min-height: 60px;
-            margin: 20px 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .text-content {
-            transition: opacity 1s;
-            white-space: pre-wrap;
-            line-height: 1.4;
-        }
-        #microphone-modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border: 1px solid white;
-            z-index: 1000;
-        }
-        #microphone-list {
-            list-style: none;
-            padding: 0;
-        }
-        #microphone-list li {
-            margin: 10px 0;
-            cursor: pointer;
-            padding: 5px;
-        }
-        #microphone-list li:hover {
-            background-color: rgba(255, 255, 255, 0.1);
+            font-size: 50px;
+            transition: opacity 0.5s;
         }
     </style>
 </head>
 <body>
-    <div id="transcription-container">
-        <div id="line1" class="text-line">
-            <div class="text-content"></div>
-        </div>
-        <div id="line2" class="text-line">
-            <div class="text-content"></div>
-        </div>
-    </div>
-
-    <div id="microphone-modal">
-        <h2>Select Microphone</h2>
-        <ul id="microphone-list"></ul>
-    </div>
-
+    <div id="transcript"></div>
     <script>
+        const transcriptDiv = document.getElementById('transcript');
         let recognition;
-        let fontSize = 50;
-        let fadeOutDelay = 500;
-        let fadeOutDuration = 1000;
-        let currentLine = 1;
-        let fadeOutTimeout;
-        let selectedMicrophoneId = null;
+        let lastPhrase = '';
+        let fadeTimeout;
+        let fadeDuration = 500; // Default fade-out duration
 
-        function initSpeechRecognition() {
-            if (recognition) {
-                recognition.stop();
+        // Initialize speech recognition
+        function startRecognition() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Your browser does not support speech recognition. Please use Chrome or Safari.');
+                return;
             }
-            
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+            recognition = new webkitSpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = true;
 
-            recognition.onresult = handleRecognitionResult;
-            recognition.onend = handleRecognitionEnd;
-            
+            recognition.onstart = () => {
+                console.log('Speech recognition started.');
+            };
+
+            recognition.onresult = (event) => {
+                const results = event.results;
+                const transcript = Array.from(results)
+                    .map(result => result[0].transcript)
+                    .join(' ');
+
+                const currentPhrase = transcript.trim();
+
+                if (currentPhrase !== lastPhrase) {
+                    lastPhrase = currentPhrase;
+                    clearTimeout(fadeTimeout);
+                    displayText(currentPhrase);
+                    fadeTimeout = setTimeout(() => fadeOutText(), 500);
+                }
+            };
+
+            recognition.onend = () => {
+                console.log('Speech recognition ended. Restarting...');
+                recognition.start();
+            };
+
+            recognition.onerror = (event) => {
+                console.error('Speech recognition error: ', event.error);
+            };
+
             recognition.start();
         }
 
-        function updateText(text, isFinal) {
-            const currentLineElement = document.querySelector(`#line${currentLine} .text-content`);
-            const otherLineElement = document.querySelector(`#line${currentLine === 1 ? 2 : 1} .text-content`);
-            
-            currentLineElement.style.fontSize = `${fontSize}px`;
-            currentLineElement.textContent = text;
-            currentLineElement.style.opacity = 1;
-
-            clearTimeout(fadeOutTimeout);
-
-            if (isFinal) {
-                fadeOutTimeout = setTimeout(() => {
-                    currentLineElement.style.opacity = 0;
-                    
-                    setTimeout(() => {
-                        currentLine = currentLine === 1 ? 2 : 1;
-                        otherLineElement.textContent = '';
-                    }, fadeOutDuration);
-                }, fadeOutDelay);
-            }
+        function displayText(text) {
+            transcriptDiv.textContent = text;
+            transcriptDiv.style.opacity = 1; // Reset opacity for new text
         }
 
-        function handleRecognitionResult(event) {
-            const result = event.results[event.results.length - 1];
-            const transcript = result[0].transcript;
-            
-            updateText(transcript, result.isFinal);
-        }
-
-        function handleRecognitionEnd() {
+        function fadeOutText() {
+            transcriptDiv.style.opacity = 0;
             setTimeout(() => {
-                try {
-                    recognition.start();
-                } catch (err) {
-                    console.error('Failed to restart recognition:', err);
-                    initSpeechRecognition();
-                }
-            }, 1000);
-        }
-
-        async function setupMicrophoneSelection() {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const microphones = devices.filter(device => device.kind === 'audioinput');
-            const micList = document.getElementById('microphone-list');
-            micList.innerHTML = '';
-
-            microphones.forEach(mic => {
-                const li = document.createElement('li');
-                li.textContent = mic.label || `Microphone ${micList.children.length + 1}`;
-                li.onclick = () => {
-                    selectedMicrophoneId = mic.deviceId;
-                    document.getElementById('microphone-modal').style.display = 'none';
-                    initSpeechRecognition();
-                };
-                micList.appendChild(li);
-            });
+                transcriptDiv.textContent = ''; // Clear text after fade out
+            }, fadeDuration);
         }
 
         document.addEventListener('keydown', (event) => {
             switch(event.key) {
+                case 'm':
+                    startRecognition();
+                    break;
                 case 'ArrowUp':
-                    fontSize = Math.min(fontSize + 5, 100);
-                    document.querySelectorAll('.text-content').forEach(el => {
-                        el.style.fontSize = `${fontSize}px`;
-                    });
+                    adjustFontSize(5);
                     break;
                 case 'ArrowDown':
-                    fontSize = Math.max(fontSize - 5, 20);
-                    document.querySelectorAll('.text-content').forEach(el => {
-                        el.style.fontSize = `${fontSize}px`;
-                    });
+                    adjustFontSize(-5);
                     break;
                 case 'ArrowLeft':
-                    fadeOutDuration = Math.max(fadeOutDuration - 100, 500);
+                    adjustFadeOutDuration(-100);
                     break;
                 case 'ArrowRight':
-                    fadeOutDuration = Math.min(fadeOutDuration + 100, 2000);
+                    adjustFadeOutDuration(100);
                     break;
-                case 'm':
-                case 'M':
-                    document.getElementById('microphone-modal').style.display = 'block';
-                    setupMicrophoneSelection();
+                default:
                     break;
             }
         });
 
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(() => {
-                setupMicrophoneSelection();
-                initSpeechRecognition();
-            })
-            .catch(error => {
-                console.error('Microphone access denied:', error);
-            });
-    </script>
-</body>
-</html>
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-        #transcription-container {
-            text-align: center;
-            width: 80%;
-            max-width: 800px;
-        }
-        .text-line {
-            min-height: 60px;
-            position: relative;
-            margin: 10px 0;
-        }
-        .text-content {
-            position: absolute;
-            width: 100%;
-            left: 0;
-            transition: opacity 1s;
-        }
-        .word {
-            display: inline-block;
-            opacity: 0;
-            transition: opacity 0.15s;
-        }
-        #microphone-modal {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: rgba(0, 0, 0, 0.9);
-            padding: 20px;
-            border: 1px solid white;
-            z-index: 1000;
-        }
-        #microphone-list {
-            list-style: none;
-            padding: 0;
-        }
-        #microphone-list li {
-            margin: 10px 0;
-            cursor: pointer;
-            padding: 5px;
-        }
-        #microphone-list li:hover {
-            background-color: rgba(255, 255, 255, 0.1);
-        }
-    </style>
-</head>
-<body>
-    <div id="transcription-container">
-        <div id="line1" class="text-line">
-            <div class="text-content"></div>
-        </div>
-        <div id="line2" class="text-line">
-            <div class="text-content"></div>
-        </div>
-    </div>
-
-    <div id="microphone-modal">
-        <h2>Select Microphone</h2>
-        <ul id="microphone-list"></ul>
-    </div>
-
-    <script>
-        let recognition;
-        let fontSize = 50;
-        let fadeOutDelay = 500;
-        let fadeOutDuration = 1000;
-        let currentLine = 1;
-        let fadeOutTimeout;
-        let selectedMicrophoneId = null;
-        let lastTranscript = '';
-        let silenceStart = null;
-        let isTransitioning = false;
-
-        function initSpeechRecognition() {
-            if (recognition) {
-                recognition.stop();
-            }
-            
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-
-            recognition.onresult = handleRecognitionResult;
-            recognition.onend = handleRecognitionEnd;
-            
-            recognition.start();
+        function adjustFontSize(change) {
+            const currentSize = parseInt(window.getComputedStyle(transcriptDiv).fontSize);
+            transcriptDiv.style.fontSize = `${currentSize + change}px`;
         }
 
-        function updateText(transcript, isFinal) {
-            const currentLineElement = document.querySelector(`#line${currentLine} .text-content`);
-            
-            // Only update if the transcript has changed
-            if (transcript !== lastTranscript) {
-                currentLineElement.style.fontSize = `${fontSize}px`;
-                
-                // Split transcript into words
-                const words = transcript.split(' ');
-                const existingWords = currentLineElement.querySelectorAll('.word').length;
-                
-                // Update HTML only if we have new words
-                if (words.length > existingWords || isFinal) {
-                    let html = '';
-                    words.forEach(word => {
-                        html += `<span class="word">${word} </span>`;
-                    });
-                    currentLineElement.innerHTML = html;
-                    
-                    // Fade in all words
-                    currentLineElement.querySelectorAll('.word').forEach((wordEl, index) => {
-                        if (index >= existingWords) {
-                            setTimeout(() => {
-                                wordEl.style.opacity = 1;
-                            }, 50 * (index - existingWords));
-                        } else {
-                            wordEl.style.opacity = 1;
-                        }
-                    });
-                }
-                
-                lastTranscript = transcript;
-                silenceStart = null;
-            }
-
-            if (isFinal && !isTransitioning) {
-                isTransitioning = true;
-                fadeOutTimeout = setTimeout(() => {
-                    const lineToFade = document.querySelector(`#line${currentLine} .text-content`);
-                    lineToFade.style.transition = `opacity ${fadeOutDuration}ms`;
-                    lineToFade.style.opacity = 0;
-                    
-                    setTimeout(() => {
-                        currentLine = currentLine === 1 ? 2 : 1;
-                        lastTranscript = '';
-                        isTransitioning = false;
-                    }, fadeOutDuration);
-                }, fadeOutDelay);
-            }
+        function adjustFadeOutDuration(change) {
+            fadeDuration = Math.max(100, fadeDuration + change); // Ensure fadeDuration is at least 100ms
+            clearTimeout(fadeTimeout);
+            fadeTimeout = setTimeout(() => fadeOutText(), fadeDuration);
         }
 
-        function handleRecognitionResult(event) {
-            if (isTransitioning) return;
-            
-            const result = event.results[event.results.length - 1];
-            const transcript = result[0].transcript;
-            
-            updateText(transcript, result.isFinal);
-        }
-
-        function handleRecognitionEnd() {
-            setTimeout(() => {
-                try {
-                    recognition.start();
-                } catch (err) {
-                    console.error('Failed to restart recognition:', err);
-                    initSpeechRecognition();
-                }
-            }, 1000);
-        }
-
-        async function setupMicrophoneSelection() {
-            const devices = await navigator.mediaDevices.enumerateDevices();
-            const microphones = devices.filter(device => device.kind === 'audioinput');
-            const micList = document.getElementById('microphone-list');
-            micList.innerHTML = '';
-
-            microphones.forEach(mic => {
-                const li = document.createElement('li');
-                li.textContent = mic.label || `Microphone ${micList.children.length + 1}`;
-                li.onclick = () => {
-                    selectedMicrophoneId = mic.deviceId;
-                    document.getElementById('microphone-modal').style.display = 'none';
-                    initSpeechRecognition();
-                };
-                micList.appendChild(li);
-            });
-        }
-
-        document.addEventListener('keydown', (event) => {
-            switch(event.key) {
-                case 'ArrowUp':
-                    fontSize = Math.min(fontSize + 5, 100);
-                    document.querySelectorAll('.text-content').forEach(el => {
-                        el.style.fontSize = `${fontSize}px`;
-                    });
-                    break;
-                case 'ArrowDown':
-                    fontSize = Math.max(fontSize - 5, 20);
-                    document.querySelectorAll('.text-content').forEach(el => {
-                        el.style.fontSize = `${fontSize}px`;
-                    });
-                    break;
-                case 'ArrowLeft':
-                    fadeOutDuration = Math.max(fadeOutDuration - 100, 500);
-                    break;
-                case 'ArrowRight':
-                    fadeOutDuration = Math.min(fadeOutDuration + 100, 2000);
-                    break;
-                case 'm':
-                case 'M':
-                    document.getElementById('microphone-modal').style.display = 'block';
-                    setupMicrophoneSelection();
-                    break;
-            }
-        });
-
-        navigator.mediaDevices.getUserMedia({ audio: true })
-            .then(() => {
-                setupMicrophoneSelection();
-                initSpeechRecognition();
-            })
-            .catch(error => {
-                console.error('Microphone access denied:', error);
-            });
+        // Request microphone access on page load
+        window.onload = function() {
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(() => {
+                    console.log('Microphone access granted.');
+                })
+                .catch((error) => {
+                    console.error('Microphone access denied: ', error);
+                });
+        };
     </script>
 </body>
 </html>

@@ -9,110 +9,91 @@
             background-color: black;
             color: white;
             display: flex;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
             margin: 0;
-            overflow: hidden;
-            font-family: Arial, sans-serif;
-        }
-        #transcript {
-            text-align: center;
             font-size: 50px;
+            text-align: center;
         }
-        #controls {
+        .transcription {
             position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 18px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            white-space: nowrap;
+        }
+        .fade-out {
+            transition: opacity 0.5s ease-out;
+            opacity: 0;
         }
     </style>
 </head>
 <body>
-    <div id="transcript">Initializing...</div>
-    <div id="controls">
-        Up/Down Arrow: Font Size: <span id="fontSizeDisplay">50</span>px<br>
-        Left/Right Arrow: Fade Duration: <span id="fadeDurationDisplay">500</span>ms
-    </div>
+    <div class="transcription" id="transcription"></div>
     <script>
-        let selectedMic = null;
-        let transcriptElement = document.getElementById('transcript');
-        let controlsElement = document.getElementById('controls');
-        let fontSizeDisplay = document.getElementById('fontSizeDisplay');
-        let fadeDurationDisplay = document.getElementById('fadeDurationDisplay');
         let recognition;
+        let transcriptionDiv = document.getElementById('transcription');
+        let currentText = '';
+        let fadeTimeout;
         let fontSize = 50;
         let fadeDuration = 500;
-        let timeoutId;
-        let firstWordDetected = false;
 
-        function startTranscription() {
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.interimResults = true;
-            recognition.lang = 'en-US';
-
-            recognition.onresult = (event) => {
-                let transcript = '';
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        transcript += event.results[i][0].transcript + ' ';
-                    }
-                }
-                displayTranscript(transcript);
-            };
-
-            recognition.onend = () => {
-                startTranscription(); // Restart recognition when it stops
-            };
-
-            recognition.start();
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+        } else if ('SpeechRecognition' in window) {
+            recognition = new SpeechRecognition();
+        } else {
+            alert('Your browser does not support speech recognition.');
         }
 
-        function displayTranscript(text) {
-            clearTimeout(timeoutId); // Clear the previous timeout
-            transcriptElement.textContent = text;
-            transcriptElement.style.transition = `opacity ${fadeDuration / 1000}s`; // Apply fade duration
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = 'en-US';
 
-            if (text.trim()) {
-                if (!firstWordDetected) {
-                    firstWordDetected = true;
-                    controlsElement.style.transition = 'opacity 1s';
-                    controlsElement.style.opacity = '0';
-                    setTimeout(() => controlsElement.style.display = 'none', 1000);
+        recognition.onresult = function(event) {
+            clearTimeout(fadeTimeout);
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; ++i) {
+                if (event.results[i].isFinal) {
+                    currentText += event.results[i].transcript + ' ';
+                } else {
+                    interimTranscript += event.results[i].transcript;
                 }
-
-                timeoutId = setTimeout(() => {
-                    transcriptElement.style.opacity = '0';
-                    setTimeout(() => {
-                        transcriptElement.textContent = '';
-                        transcriptElement.style.opacity = '1';
-                    }, fadeDuration);
-                }, 500);
             }
-        }
+            transcriptionDiv.innerHTML = currentText + '<span style="opacity: 0.5;">' + interimTranscript + '</span>';
+            fadeTimeout = setTimeout(() => {
+                transcriptionDiv.classList.add('fade-out');
+            }, 500);
+        };
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'M' || event.key === 'm') {
-                // Logic to select microphone
-                alert('Microphone selection feature is under development.');
-            } else if (event.key === 'ArrowUp') {
-                fontSize += 2;
-                transcriptElement.style.fontSize = fontSize + 'px';
-                fontSizeDisplay.textContent = fontSize;
+        recognition.onerror = function(event) {
+            console.error(event.error);
+        };
+
+        recognition.onend = function() {
+            recognition.start();
+        };
+
+        recognition.start();
+
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'ArrowUp') {
+                fontSize += 5;
+                document.body.style.fontSize = fontSize + 'px';
             } else if (event.key === 'ArrowDown') {
-                fontSize -= 2;
-                transcriptElement.style.fontSize = fontSize + 'px';
-                fontSizeDisplay.textContent = fontSize;
+                fontSize -= 5;
+                document.body.style.fontSize = fontSize + 'px';
             } else if (event.key === 'ArrowLeft') {
-                fadeDuration = Math.max(100, fadeDuration - 50); // Prevent negative fade duration
-                fadeDurationDisplay.textContent = fadeDuration;
+                fadeDuration -= 100;
+                document.querySelector('.fade-out').style.transition = `opacity ${fadeDuration}ms ease-out`;
             } else if (event.key === 'ArrowRight') {
-                fadeDuration += 50;
-                fadeDurationDisplay.textContent = fadeDuration;
+                fadeDuration += 100;
+                document.querySelector('.fade-out').style.transition = `opacity ${fadeDuration}ms ease-out`;
+            } else if (event.key === 'M') {
+                // Handle microphone selection logic here
             }
         });
-
-        startTranscription();
     </script>
 </body>
 </html>

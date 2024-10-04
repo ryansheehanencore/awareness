@@ -38,7 +38,9 @@
             recognition.onresult = (event) => {
                 let transcript = '';
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    transcript += event.results[i].transcript;
+                    if (event.results[i].isFinal) {
+                        transcript += event.results[i].transcript + ' ';
+                    }
                 }
                 transcriptionDiv.innerHTML = transcript;
                 lastUpdateTime = Date.now();

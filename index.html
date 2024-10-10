@@ -56,6 +56,16 @@
     <div id="transcription"></div>
 
     <script>
+        
+///new code
+        document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        if (isMuted) {
+            toggleTranscription(); // Restart transcription if it was stopped
+        }
+    }
+});
+///old code
         let isMuted = true;
         let transcript = document.getElementById('transcription');
         let message = document.getElementById('message');

@@ -69,17 +69,10 @@
         let isMuted = true;
         let transcript = document.getElementById('transcription');
         let message = document.getElementById('message');
-        let menu = document.getElementById('menu');
         let fontSize = 30;
         let fadeRate = 1000; // Default fade rate
         let maxLines = 3; // Maximum lines visible
         let lines = []; // Array to store visible lines
-
-        const updateMenu = () => {
-            menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
-            menu.classList.add('visible');
-            setTimeout(() => menu.classList.remove('visible'), 2000);
-        };
 
         const fadeOutOldLine = () => {
             if (lines.length > 0) {
@@ -108,18 +101,21 @@
         };
 
         const handleTranscription = (event) => {
-            if (!isMuted) {
-                let interimText = '';
-                let finalText = '';
+            let interimText = '';
+            let finalText = '';
 
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    let transcriptText = event.results[i][0].transcript.trim();
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                let transcriptText = event.results[i][0].transcript.trim();
 
-                    if (event.results[i].isFinal) {
-                        finalText += transcriptText;
-                        addNewLine(finalText); // Add the final text as a new line
+                if (event.results[i].isFinal) {
+                    finalText += transcriptText;
+                    addNewLine(finalText); // Add the final text as a new line
+                } else {
+                    interimText = transcriptText;
+                    if (lines.length > 0) {
+                        lines[lines.length - 1].textContent = interimText; // Update interim line
                     } else {
-                        interimText = transcriptText;
+                        addNewLine(interimText); // Add interim line
                     }
                 }
             }
@@ -134,11 +130,10 @@
             isMuted = !isMuted;
             if (!isMuted) {
                 recognition.start();
-                transcript.innerHTML = 'Listening...';
+                transcript.innerHTML = ''; // Clear previous content
                 message.style.opacity = 0;
             } else {
                 recognition.stop();
-                transcript.innerHTML = '';
                 message.innerHTML = "Press 'M' to start transcription";
                 message.style.opacity = 1;
             }
@@ -152,38 +147,7 @@
             }
         });
 
-        window.addEventListener('touchstart', (event) => {
-            touchStartX = event.touches[0].clientX;
-            touchStartY = event.touches[0].clientY;
-        });
-
-        window.addEventListener('touchmove', (event) => {
-            const touchEndX = event.touches[0].clientX;
-            const touchEndY = event.touches[0].clientY;
-            const diffX = touchEndX - touchStartX;
-            const diffY = touchEndY - touchStartY;
-
-            if (Math.abs(diffY) > Math.abs(diffX)) {
-                if (diffY < 0) {
-                    fontSize += 2;
-                } else {
-                    fontSize -= 2;
-                }
-                updateMenu();
-            }
-
-            if (Math.abs(diffX) > Math.abs(diffY)) {
-                if (diffX < 0) {
-                    fadeRate = Math.max(500, fadeRate - 100);
-                } else {
-                    fadeRate += 100;
-                }
-                updateMenu();
-            }
-        });
-
         updateMenu();
     </script>
 </body>
 </html>
-

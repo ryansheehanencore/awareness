@@ -21,10 +21,20 @@
         #transcription {
             text-align: center;
             font-size: 50px;
-            opacity: 0;
-            transition: opacity 1s;
             word-wrap: break-word;
             max-width: 90vw;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .transcription-line {
+            opacity: 1;
+            transition: opacity 1s;
+            white-space: nowrap;
+        }
+
+        .fade-out {
+            opacity: 0 !important;
         }
 
         #message {
@@ -61,12 +71,9 @@
         let message = document.getElementById('message');
         let menu = document.getElementById('menu');
         let fontSize = 30;
-        let fadeRate = 500; // Default fade rate
-        let touchStartX = 0;
-        let touchStartY = 0;
-        let lines = []; // To store the current lines of text
-        let maxLines = 3; // Maximum number of lines to display
-        let interimLine = ''; // To temporarily store the interim transcript (live text)
+        let fadeRate = 1000; // Default fade rate
+        let maxLines = 3; // Maximum lines visible
+        let lines = []; // Array to store visible lines
 
         const updateMenu = () => {
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
@@ -74,54 +81,47 @@
             setTimeout(() => menu.classList.remove('visible'), 2000);
         };
 
-        const fadeOutText = () => {
-            transcript.style.transition = `opacity ${fadeRate}ms`;
-            transcript.style.opacity = 0;
+        const fadeOutOldLine = () => {
+            if (lines.length > 0) {
+                const oldLine = lines.shift(); // Remove the oldest line
+                oldLine.classList.add('fade-out'); // Apply fade-out effect
+
+                // Remove line from the DOM after it has faded out
+                setTimeout(() => {
+                    oldLine.remove();
+                }, fadeRate);
+            }
         };
 
-        const updateDisplay = () => {
-            // Combine lines with the current interim text (live transcription)
-            let displayText = [...lines, interimLine].join('<br>');
-            transcript.innerHTML = displayText; // Display the combined text
-            transcript.style.fontSize = `${fontSize}px`;
-            transcript.style.opacity = 1;
+        const addNewLine = (text) => {
+            const newLine = document.createElement('div');
+            newLine.className = 'transcription-line';
+            newLine.style.fontSize = `${fontSize}px`;
+            newLine.textContent = text;
+            transcript.appendChild(newLine);
+            lines.push(newLine); // Add new line to the list
 
-            clearTimeout(fadeOutTimeout);
-            fadeOutTimeout = setTimeout(fadeOutText, 2000); // Delay fade-out
-        };
-
-        const toSentenceCase = (str) => {
-            return str.charAt(0).toUpperCase() + str.slice(1);
+            // If there are more than maxLines, fade out the oldest one
+            if (lines.length > maxLines) {
+                fadeOutOldLine();
+            }
         };
 
         const handleTranscription = (event) => {
             if (!isMuted) {
-                interimLine = ''; // Clear previous interim transcript
-                let finalTranscript = ''; // To store the final transcript
+                let interimText = '';
+                let finalText = '';
 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     let transcriptText = event.results[i][0].transcript.trim();
 
                     if (event.results[i].isFinal) {
-                        // For final results, format the sentence and add to the permanent lines array
-                        transcriptText = toSentenceCase(transcriptText);
-                        finalTranscript += transcriptText + ' ';
-
-                        // Add final transcript to the lines array
-                        lines.push(finalTranscript.trim());
-
-                        // Limit to three lines; remove the oldest if needed
-                        if (lines.length > maxLines) {
-                            lines.shift(); // Remove the first (oldest) line
-                        }
+                        finalText += transcriptText;
+                        addNewLine(finalText); // Add the final text as a new line
                     } else {
-                        // This is interim (live) text, so display it immediately
-                        interimLine = transcriptText;
+                        interimText = transcriptText;
                     }
                 }
-
-                // Update the display with both final and interim text
-                updateDisplay();
             }
         };
 
@@ -129,8 +129,6 @@
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.onresult = handleTranscription;
-
-        let fadeOutTimeout;
 
         const toggleTranscription = () => {
             isMuted = !isMuted;
@@ -188,3 +186,4 @@
     </script>
 </body>
 </html>
+

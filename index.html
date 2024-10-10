@@ -63,7 +63,7 @@ recognition.continuous = true;
 recognition.interimResults = true;
 recognition.onresult = handleTranscription;
 
-let isMuted = true;
+///let isMuted = true;
 let timeoutId;
 
 const toggleTranscription = () => {
@@ -94,7 +94,7 @@ const startListeningLoop = () => {
 
 // Rest of the code...
     
-        ///let isMuted = true;
+        let isMuted = true;
         let transcript = document.getElementById('transcription');
         let message = document.getElementById('message');
         let menu = document.getElementById('menu');

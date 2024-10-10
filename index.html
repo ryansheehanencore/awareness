@@ -81,6 +81,8 @@ window.addEventListener('keydown', (event) => {
         const colorInput = prompt("Enter a color name or hex code for the highlights (e.g., 'red', '#ff0000'):");
         if (colorInput) {
             highlightColor = colorInput.trim(); // Update the highlight color
+            localStorage.setItem('highlightColor', highlightColor); // Store in localStorage
+        
         }
     }
 });
@@ -106,6 +108,7 @@ window.addEventListener('keydown', (event) => {
         const input = prompt("Enter a list of words to highlight (comma separated):");
         if (input) {
             highlightedWords = input.split(',').map(word => word.trim()); // Store words in the array
+            localStorage.setItem('highlightedWords', JSON.stringify(highlightedWords)); // Store in localStorage
         }
     }
 });

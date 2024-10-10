@@ -108,34 +108,39 @@
         };
 
         const handleTranscription = (event) => {
-            if (!isMuted) {
-                let interimTranscript = '';  // String to hold interim results
-                let finalTranscript = '';    // String to hold final results
+    if (!isMuted) {
+        let interimTranscript = '';  // String to hold interim results
+        let finalTranscript = '';    // String to hold final results
 
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    let transcriptText = event.results[i][0].transcript.trim();
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+            let transcriptText = event.results[i][0].transcript.trim();
 
-                    if (event.results[i].isFinal) {
-                        if (isNewSentence) {
-                            transcriptText = toSentenceCase(transcriptText);
-                        }
-
-                        finalTranscript += transcriptText + '. ';
-                        isNewSentence = true;
-                    } else {
-                        interimTranscript += transcriptText + ' ';
-                        isNewSentence = false;
-                    }
+            if (event.results[i].isFinal) {
+                if (isNewSentence) {
+                    transcriptText = toSentenceCase(transcriptText);
                 }
-
-                let formattedText = formatText(finalTranscript + interimTranscript);
-                transcript.innerHTML = formattedText;
-                transcript.style.fontSize = `${fontSize}px`;
-                transcript.style.opacity = 1;
-                clearTimeout(fadeOutTimeout);
-                fadeOutTimeout = setTimeout(fadeOutText, 250); ///when the text refereshes
+                finalTranscript += transcriptText + '. ';
+                isNewSentence = true;
+            } else {
+                interimTranscript += transcriptText + ' ';
+                isNewSentence = false;
             }
-        };
+        }
+
+        // Format the text for better readability
+        let formattedText = formatText(finalTranscript + interimTranscript);
+
+        // Only update if text is different to avoid flickering
+        if (transcript.innerHTML !== formattedText) {
+            transcript.innerHTML = formattedText;
+            transcript.style.fontSize = `${fontSize}px`;
+            transcript.style.opacity = 1;
+
+            clearTimeout(fadeOutTimeout);
+            fadeOutTimeout = setTimeout(fadeOutText, 2000); // Increase delay to 2 seconds
+        }
+    }
+};
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = true;

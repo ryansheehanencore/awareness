@@ -1,55 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Real-time Transcription</title>
-    <style>
-        body {
-            margin: 0;
-            height: 100vh;
-            background-color: black;
-            color: white;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-family: Arial, sans-serif;
-        }
-        #transcription {
-            font-size: 50px;
-            text-align: center;
-            line-height: 1.5;
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-        }
-        #menu {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            font-size: 16px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 10px;
-            border-radius: 5px;
-        }
-        #menu.hidden {
-            display: none;
-        }
-        #prompt {
-            font-size: 50px;
-            text-align: center;
-        }
-    </style>
+  <title>Real-time Transcription</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-    <div id="prompt">Press or Tap 'M' to Start Transcription</div>
-    <div id="transcription" class="hidden"></div>
-    <div id="menu" class="hidden">
-        Font size: <span id="fontSizeDisplay">50</span><br>
-        Fade-out time: <span id="fadeTimeDisplay">500</span>ms
-    </div>
-
-    <script src="app.js"></script>
+  <div id="transcription-container">
+    <p id="transcription"></p>
+  </div>
+  <script src="script.js"></script>
 </body>
 </html>

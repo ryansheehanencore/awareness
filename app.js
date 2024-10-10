@@ -9,6 +9,8 @@ let fadeOutTime = 500;
 let pauseDuration = 300; // Pause time for sentence completion (adjustable)
 let transcription = "";
 let lineCount = 0;
+let isTranscribing = false; // New flag to track transcription state
+let recognition; // Variable to hold the recognition object
 
 // Update font size and fade time in the menu
 function updateMenuDisplay() {
@@ -40,14 +42,24 @@ function handleKeyInput(event) {
     }
 }
 
+// Toggle transcription on and off
+function toggleTranscription() {
+    if (!isTranscribing) {
+        startTranscription();
+    } else {
+        stopTranscription();
+    }
+}
+
 // Start the transcription process
 function startTranscription() {
+    isTranscribing = true;
     transcriptionDiv.classList.remove('hidden');
     menuDiv.classList.remove('hidden');
     promptDiv.classList.add('hidden');
 
-    // Begin voice recognition
-    let recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+    // Initialize speech recognition
+    recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
     recognition.continuous = true;
     recognition.interimResults = true;
 
@@ -64,6 +76,18 @@ function startTranscription() {
     };
 
     recognition.start();
+}
+
+// Stop the transcription process
+function stopTranscription() {
+    isTranscribing = false;
+    transcriptionDiv.classList.add('hidden');
+    menuDiv.classList.add('hidden');
+    promptDiv.classList.remove('hidden');
+
+    if (recognition) {
+        recognition.stop();
+    }
 }
 
 // Add the text to the screen and handle fade-out logic
@@ -98,8 +122,8 @@ function fadeOut(element) {
 // Key event listener
 document.addEventListener('keydown', (event) => {
     if (event.key === "M" || event.key === "m") {
-        startTranscription();
-    } else {
+        toggleTranscription();
+    } else if (isTranscribing) {
         handleKeyInput(event);
     }
 });

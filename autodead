@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Transcription Display</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #transcription {
+            text-align: center;
+            font-size: 50px;
+            opacity: 0;
+            transition: opacity 1s;
+            word-wrap: break-word;
+            max-width: 90vw;
+        }
+
+        #message {
+            position: absolute;
+            text-align: center;
+            font-size: 40px;
+            color: gray;
+            opacity: 1;
+            transition: opacity 1s;
+        }
+
+        #menu {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .visible {
+            opacity: 1 !important;
+        }
+
+        span {
+            color: white;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="menu">Up/Down Font Size: 50 | Left/Right Fade Rate: 1000ms</div>
+    <div id="message">Press '<span id="clickableM">M</span>' to start transcription</div>
+    <div id="transcription"></div>
+
+    <script>
+        let isMuted = true;
+        let transcript = document.getElementById('transcription');
+        let message = document.getElementById('message');
+        let clickableM = document.getElementById('clickableM');
+        let menu = document.getElementById('menu');
+        let fontSize = 50;
+        let fadeRate = 1500;
+
+        const updateMenu = () => {
+            menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
+            menu.classList.add('visible');
+            setTimeout(() => menu.classList.remove('visible'), 1000);
+        };
+
+        const fadeOutText = () => {
+            transcript.style.transition = `opacity ${fadeRate}ms`;
+            transcript.style.opacity = 0;
+        };
+
+        let isNewSentence = true;
+
+        const toSentenceCase = (str) => {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        };
+
+        const handleTranscription = (event) => {
+            if (!isMuted) {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    let transcriptText = event.results[i][0].transcript.trim();
+
+                    if (event.results[i].isFinal) {
+                        if (isNewSentence) {
+                            transcriptText = toSentenceCase(transcriptText);
+                        }
+                        finalTranscript += transcriptText + '. ';
+                        isNewSentence = true;
+                    } else {
+                        interimTranscript += transcriptText + ' ';
+                        isNewSentence = false;
+                    }
+                }
+
+                transcript.innerHTML = finalTranscript + interimTranscript;
+                transcript.style.fontSize = `${fontSize}px`;
+                transcript.style.opacity = 1;
+                clearTimeout(fadeOutTimeout);
+                fadeOutTimeout = setTimeout(fadeOutText, 1000);
+            }
+        };
+
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.onresult = handleTranscription;
+
+        let fadeOutTimeout;
+
+        const toggleTranscription = () => {
+            isMuted = !isMuted;
+            if (!isMuted) {
+                recognition.start();
+                transcript.innerHTML = 'Listening...';
+                message.style.opacity = 0;
+            } else {
+                recognition.stop();
+                transcript.innerHTML = '';
+                message.innerHTML = "Press '<span id='clickableM'>M</span>' to start transcription";
+                message.style.opacity = 1;
+            }
+        };
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key.toLowerCase() === 'm') {
+                toggleTranscription();
+            }
+        });
+
+        clickableM.addEventListener('click', () => {
+            toggleTranscription();
+        });
+
+        updateMenu();
+    </script>
+</body>
+</html>

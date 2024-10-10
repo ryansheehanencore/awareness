@@ -148,7 +148,7 @@ if (storedColor) {
 
         // Basic check for common question starters
         const isQuestion = (str) => {
-            const questionWords = ['what', 'why', 'how', 'where', 'when', 'who', 'which'];
+            const questionWords = ['what', 'why', 'how', 'where', 'when', 'who', 'which', 'can'];
             const lowerStr = str.toLowerCase();
             return questionWords.some(word => lowerStr.startsWith(word));
         };

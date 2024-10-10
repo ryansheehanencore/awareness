@@ -60,7 +60,7 @@
         let transcript = document.getElementById('transcription');
         let message = document.getElementById('message');
         let menu = document.getElementById('menu');
-        let fontSize = 50;
+        let fontSize = 30;
         let fadeRate = 500; ///default fade rate
         let touchStartX = 0;
         let touchStartY = 0;
@@ -68,7 +68,7 @@
         const updateMenu = () => {
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
             menu.classList.add('visible');
-            setTimeout(() => menu.classList.remove('visible'), 200);
+            setTimeout(() => menu.classList.remove('visible'), 2000);
         };
 
         const fadeOutText = () => {
@@ -140,7 +140,7 @@
                 transcript.style.fontSize = `${fontSize}px`;
                 transcript.style.opacity = 1;
                 clearTimeout(fadeOutTimeout);
-                fadeOutTimeout = setTimeout(fadeOutText, 200); ///when the text refereshes
+                fadeOutTimeout = setTimeout(fadeOutText, 300); ///when the text refereshes
             }
         };
 

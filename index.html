@@ -56,16 +56,6 @@
     <div id="transcription"></div>
 
     <script>
-/// Add script
-        
-        recognition.onend = () => {
-  if (!isMuted) {
-    recognition.start(); // Restart recognition on end
-  }
-};
-
-// Rest of the code...
-    
         let isMuted = true;
         let transcript = document.getElementById('transcription');
         let message = document.getElementById('message');

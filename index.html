@@ -182,10 +182,10 @@ const startListeningLoop = () => {
             }
         };
 
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.onresult = handleTranscription;
+        ///const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        ///recognition.continuous = true;
+        ///recognition.interimResults = true;
+        ///recognition.onresult = handleTranscription;
 
         let fadeOutTimeout;
 

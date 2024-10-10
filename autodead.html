@@ -78,6 +78,13 @@
 
         let isNewSentence = true;  // Flag to track if a new sentence is starting
 
+        // Basic check for common question starters
+        const isQuestion = (str) => {
+            const questionWords = ['what', 'why', 'how', 'where', 'when', 'who', 'which'];
+            const lowerStr = str.toLowerCase();
+            return questionWords.some(word => lowerStr.startsWith(word));
+        };
+
         const toSentenceCase = (str) => {
             // Capitalize the first letter of the first word
             return str.charAt(0).toUpperCase() + str.slice(1);
@@ -97,8 +104,13 @@
                             transcriptText = toSentenceCase(transcriptText);
                         }
 
-                        // Append final result and add punctuation
-                        finalTranscript += transcriptText + '. ';
+                        // Check if it's a question and end with '?' or '.'
+                        if (isQuestion(transcriptText)) {
+                            finalTranscript += transcriptText + '? ';
+                        } else {
+                            finalTranscript += transcriptText + '. ';
+                        }
+
                         isNewSentence = true;  // Reset flag for the next sentence
                     } else {
                         // For interim results, simply append the text as it is

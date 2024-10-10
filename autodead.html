@@ -61,14 +61,14 @@
         let message = document.getElementById('message');
         let menu = document.getElementById('menu');
         let fontSize = 50;
-        let fadeRate = 1500;
+        let fadeRate = 500; ///default fade rate
         let touchStartX = 0;
         let touchStartY = 0;
 
         const updateMenu = () => {
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
             menu.classList.add('visible');
-            setTimeout(() => menu.classList.remove('visible'), 1000);
+            setTimeout(() => menu.classList.remove('visible'), 2000);
         };
 
         const fadeOutText = () => {

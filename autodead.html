@@ -168,10 +168,31 @@
         document.getElementById('start-transcription').addEventListener('click', toggleTranscription);
 
         window.addEventListener('keydown', (event) => {
-            if (event.key.toLowerCase() === 'm') {
-                toggleTranscription();
-            }
-        });
+    if (event.key.toLowerCase() === 'm') {
+        toggleTranscription();
+    }
+
+    if (event.key === 'ArrowUp') {
+        fontSize += 2;
+        updateMenu();
+    }
+
+    if (event.key === 'ArrowDown') {
+        fontSize = Math.max(10, fontSize - 2); // Ensure font size doesn't go too small
+        updateMenu();
+    }
+
+    if (event.key === 'ArrowRight') {
+        fadeRate += 100;
+        updateMenu();
+    }
+
+    if (event.key === 'ArrowLeft') {
+        fadeRate = Math.max(500, fadeRate - 100); // Ensure fade rate doesn't go below 500ms
+        updateMenu();
+    }
+});
+
 
         window.addEventListener('touchstart', (event) => {
             touchStartX = event.touches[0].clientX;

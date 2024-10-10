@@ -3,172 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Voice Transcription Display</title>
+    <title>Live Transcription Tool</title>
     <style>
         body {
-            margin: 0;
-            padding: 0;
             background-color: black;
             color: white;
-            font-family: Arial, sans-serif;
+            font-size: 50px;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            margin: 0;
             overflow: hidden;
         }
-
         #transcription {
             text-align: center;
-            font-size: 50px;
-            word-wrap: break-word;
-            max-width: 90vw;
-            display: flex;
-            flex-direction: column;
+            width: 80%;
         }
-
-        .transcription-line {
-            opacity: 1;
-            transition: opacity 1s;
-            white-space: nowrap;
-        }
-
-        .fade-out {
-            opacity: 0 !important;
-        }
-
-        #message {
-            position: absolute;
-            text-align: center;
-            font-size: 40px;
-            color: gray;
-            opacity: 1;
-            transition: opacity 1s;
-        }
-
         #menu {
             position: absolute;
             top: 10px;
             left: 10px;
-            font-size: 16px;
-            opacity: 0;
-            transition: opacity 1s;
-        }
-
-        .visible {
-            opacity: 1 !important;
+            display: none;
         }
     </style>
 </head>
 <body>
-    <div id="menu">Up/Down Font Size: 50 | Left/Right Fade Rate: 1000ms</div>
-    <div id="message">Press '<span id="start-transcription">M</span>' to start transcription</div>
-    <div id="transcription"></div>
-
+    <div id="transcription">Press "M" to start transcription</div>
+    <div id="menu">
+        <p>Up arrow or swipe: increase font size</p>
+        <p>Down arrow or swipe: decrease font size</p>
+        <p>Left arrow or swipe: shorten text fade-out time</p>
+        <p>Right arrow or swipe: extend text fade-out time</p>
+        <p>Font size: <span id="fontSize">50</span></p>
+        <p>Fade-out time: <span id="fadeOutTime">500</span>ms</p>
+    </div>
     <script>
-        let isMuted = true;
-        let transcript = document.getElementById('transcription');
-        let message = document.getElementById('message');
-        let fontSize = 30;
-        let fadeRate = 1000; // Default fade rate
-        let maxLines = 3; // Maximum lines visible
-        let lines = []; // Array to store visible lines
+        let fontSize = 50;
+        let fadeOutTime = 500;
+        let transcriptionElement = document.getElementById('transcription');
+        let menuElement = document.getElementById('menu');
 
-        let currentLine = ''; // Current line being built (interim)
-        let interimElement; // The element for interim text display
-
-        // Fades out the oldest line when there are more than maxLines
-        const fadeOutOldLine = () => {
-            if (lines.length > 0) {
-                const oldLine = lines.shift(); // Remove the oldest line
-                oldLine.classList.add('fade-out'); // Apply fade-out effect
-
-                // Remove line from the DOM after it has faded out
-                setTimeout(() => {
-                    oldLine.remove();
-                }, fadeRate);
-            }
-        };
-
-        // Adds a new line to the display and manages the max line count
-        const addNewLine = (text) => {
-            const newLine = document.createElement('div');
-            newLine.className = 'transcription-line';
-            newLine.style.fontSize = `${fontSize}px`;
-            newLine.textContent = text;
-            transcript.appendChild(newLine);
-            lines.push(newLine); // Add new line to the list
-
-            // If there are more than maxLines, fade out the oldest one
-            if (lines.length > maxLines) {
-                fadeOutOldLine();
-            }
-        };
-
-        // Updates the interim text live as you speak
-        const updateInterimText = (text) => {
-            if (!interimElement) {
-                interimElement = document.createElement('div');
-                interimElement.className = 'transcription-line';
-                interimElement.style.fontSize = `${fontSize}px`;
-                transcript.appendChild(interimElement);
-            }
-            interimElement.textContent = text; // Update the interim text live
-        };
-
-        // Finalizes a sentence (moves interim to a final line)
-        const finalizeSentence = (text) => {
-            if (interimElement) {
-                interimElement.remove(); // Remove the interim text element
-                interimElement = null;
-            }
-            addNewLine(text); // Add the finalized text to the display
-        };
-
-        const handleTranscription = (event) => {
-            let interimText = '';
-            let finalText = '';
-
-            for (let i = event.resultIndex; i < event.results.length; i++) {
-                let transcriptText = event.results[i][0].transcript.trim();
-
-                if (event.results[i].isFinal) {
-                    finalText += transcriptText;
-                    finalizeSentence(finalText); // Move the final text to a new line
-                } else {
-                    interimText = transcriptText;
-                    updateInterimText(currentLine + ' ' + interimText); // Build live
-                }
-            }
-        };
-
-        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-        recognition.continuous = true;
-        recognition.interimResults = true;
-        recognition.onresult = handleTranscription;
-
-        const toggleTranscription = () => {
-            isMuted = !isMuted;
-            if (!isMuted) {
-                recognition.start();
-                transcript.innerHTML = ''; // Clear previous content
-                message.style.opacity = 0;
-            } else {
-                recognition.stop();
-                message.innerHTML = "Press 'M' to start transcription";
-                message.style.opacity = 1;
-            }
-        };
-
-        document.getElementById('start-transcription').addEventListener('click', toggleTranscription);
-
-        window.addEventListener('keydown', (event) => {
-            if (event.key.toLowerCase() === 'm') {
-                toggleTranscription();
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'm' || event.key === 'M') {
+                startTranscription();
             }
         });
 
-        updateMenu();
+        function startTranscription() {
+            transcriptionElement.innerHTML = '';
+            menuElement.style.display = 'block';
+            // Implement microphone access and real-time transcription here
+        }
+
+        // Add event listeners for adjusting settings
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'ArrowUp') {
+                fontSize += 5;
+            } else if (event.key === 'ArrowDown') {
+                fontSize -= 5;
+            } else if (event.key === 'ArrowLeft') {
+                fadeOutTime -= 100;
+            } else if (event.key === 'ArrowRight') {
+                fadeOutTime += 100;
+            }
+            updateSettings();
+        });
+
+        function updateSettings() {
+            document.getElementById('fontSize').textContent = fontSize;
+            document.getElementById('fadeOutTime').textContent = fadeOutTime;
+            transcriptionElement.style.fontSize = fontSize + 'px';
+        }
     </script>
 </body>
 </html>

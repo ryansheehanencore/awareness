@@ -74,6 +74,10 @@
         let maxLines = 3; // Maximum lines visible
         let lines = []; // Array to store visible lines
 
+        let currentLine = ''; // Current line being built (interim)
+        let interimElement; // The element for interim text display
+
+        // Fades out the oldest line when there are more than maxLines
         const fadeOutOldLine = () => {
             if (lines.length > 0) {
                 const oldLine = lines.shift(); // Remove the oldest line
@@ -86,6 +90,7 @@
             }
         };
 
+        // Adds a new line to the display and manages the max line count
         const addNewLine = (text) => {
             const newLine = document.createElement('div');
             newLine.className = 'transcription-line';
@@ -100,6 +105,26 @@
             }
         };
 
+        // Updates the interim text live as you speak
+        const updateInterimText = (text) => {
+            if (!interimElement) {
+                interimElement = document.createElement('div');
+                interimElement.className = 'transcription-line';
+                interimElement.style.fontSize = `${fontSize}px`;
+                transcript.appendChild(interimElement);
+            }
+            interimElement.textContent = text; // Update the interim text live
+        };
+
+        // Finalizes a sentence (moves interim to a final line)
+        const finalizeSentence = (text) => {
+            if (interimElement) {
+                interimElement.remove(); // Remove the interim text element
+                interimElement = null;
+            }
+            addNewLine(text); // Add the finalized text to the display
+        };
+
         const handleTranscription = (event) => {
             let interimText = '';
             let finalText = '';
@@ -109,14 +134,10 @@
 
                 if (event.results[i].isFinal) {
                     finalText += transcriptText;
-                    addNewLine(finalText); // Add the final text as a new line
+                    finalizeSentence(finalText); // Move the final text to a new line
                 } else {
                     interimText = transcriptText;
-                    if (lines.length > 0) {
-                        lines[lines.length - 1].textContent = interimText; // Update interim line
-                    } else {
-                        addNewLine(interimText); // Add interim line
-                    }
+                    updateInterimText(currentLine + ' ' + interimText); // Build live
                 }
             }
         };

@@ -59,6 +59,20 @@
         
 ///new code
 
+        // Retrieve stored words and color from localStorage
+const storedWords = localStorage.getItem('highlightedWords');
+const storedColor = localStorage.getItem('highlightColor');
+
+if (storedWords) {
+    highlightedWords = JSON.parse(storedWords); // Parse and load stored words
+}
+
+if (storedColor) {
+    highlightColor = storedColor; // Load stored color
+}
+
+        ///old code
+
         let highlightColor = 'red'; // Default highlight color
 
         // Listen for the 'b' key to prompt for color

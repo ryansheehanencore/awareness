@@ -219,6 +219,23 @@ if (storedColor) {
         recognition.continuous = true;
         recognition.interimResults = true;
         recognition.onresult = handleTranscription;
+///new below
+        /// New event listeners for handling errors and the end of recognition
+recognition.onerror = (event) => {
+    console.error('Error occurred in recognition: ', event.error);
+};
+
+recognition.onend = () => {
+    console.warn('Speech recognition service disconnected. Attempting to restart...');
+    // Optionally, you can restart recognition after a brief delay
+    setTimeout(() => {
+        if (!isMuted) { // Restart only if not muted
+            recognition.start();
+            console.log('Speech recognition restarted.');
+        }
+    }, 1000); // Adjust the delay as needed
+};
+///old below        
 
         let fadeOutTimeout;
 

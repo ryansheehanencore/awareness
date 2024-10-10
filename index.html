@@ -56,6 +56,44 @@
     <div id="transcription"></div>
 
     <script>
+//// keep transcription active
+
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.continuous = true;
+recognition.interimResults = true;
+recognition.onresult = handleTranscription;
+
+let isMuted = true;
+let timeoutId;
+
+const toggleTranscription = () => {
+  isMuted = !isMuted;
+  if (!isMuted) {
+    recognition.start();
+    transcript.innerHTML = 'Listening...';
+    message.style.opacity = 0;
+    startListeningLoop();
+  } else {
+    recognition.stop();
+    clearTimeout(timeoutId);
+    transcript.innerHTML = '';
+    message.innerHTML = "Press 'M' to start transcription";
+    message.style.opacity = 1;
+  }
+};
+
+const startListeningLoop = () => {
+  timeoutId = setTimeout(() => {
+    recognition.stop();
+    if (!isMuted) {
+      recognition.start(); // Restart recognition after a short timeout
+      startListeningLoop();
+    }
+  }, 1000); // Adjust timeout value as needed (in milliseconds)
+};
+
+// Rest of the code...
+    
         let isMuted = true;
         let transcript = document.getElementById('transcription');
         let message = document.getElementById('message');

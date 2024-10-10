@@ -107,74 +107,86 @@
             return paragraphs.join('\n\n');  // Join paragraphs with double line breaks
         };
 
-        let lines = []; // To store the current lines of text
+let lines = []; // To store the current lines of text
 let maxLines = 3; // Maximum number of lines to display
+let interimLine = ''; // To temporarily store the interim transcript (live text)
 
 const updateDisplay = () => {
-    // Build the display content by joining the lines array into HTML
-    transcript.innerHTML = lines.join('<br>');  // Join lines with a break for line separation
-
-    // Set the appropriate font size and visibility for the updated transcript
+    // Combine lines with the current interim text (live transcription)
+    let displayText = [...lines, interimLine].join('<br>');
+    transcript.innerHTML = displayText; // Display the combined text
     transcript.style.fontSize = `${fontSize}px`;
     transcript.style.opacity = 1;
 
-    // Start the fade-out timer for the current text
     clearTimeout(fadeOutTimeout);
-    fadeOutTimeout = setTimeout(fadeOutText, 2000); // Keep 2 seconds delay for fade-out
+    fadeOutTimeout = setTimeout(fadeOutText, 2000); // Delay fade-out
 };
 
 const handleTranscription = (event) => {
     if (!isMuted) {
-        let finalTranscript = '';
+        interimLine = ''; // Clear previous interim transcript
+        let finalTranscript = ''; // To store the final transcript
 
         for (let i = event.resultIndex; i < event.results.length; i++) {
             let transcriptText = event.results[i][0].transcript.trim();
 
             if (event.results[i].isFinal) {
-                if (isNewSentence) {
-                    transcriptText = toSentenceCase(transcriptText);
-                }
-                finalTranscript += transcriptText + '. ';
+                // For final results, format the sentence and add to the permanent lines array
+                transcriptText = toSentenceCase(transcriptText);
+                finalTranscript += transcriptText + ' ';
                 isNewSentence = true;
+
+                // Add final transcript to the lines array
+                lines.push(finalTranscript.trim());
+
+                // Limit to three lines; remove the oldest if needed
+                if (lines.length > maxLines) {
+                    lines.shift(); // Remove the first (oldest) line
+                }
+            } else {
+                // This is interim (live) text, so display it immediately
+                interimLine = transcriptText;
             }
         }
 
-        if (finalTranscript) {
-            // Add the new line to the lines array
-            lines.push(finalTranscript.trim());
-
-            // If we have more than 3 lines, remove the oldest one
-            if (lines.length > maxLines) {
-                // Remove the oldest line with a fade-out effect
-                const oldestLine = lines.shift();  // Remove the first line
-
-                // Create a fading element for the old line (Optional: use a hidden div if needed)
-                const fadingLine = document.createElement('div');
-                fadingLine.innerHTML = oldestLine;
-                fadingLine.style.fontSize = `${fontSize}px`;
-                fadingLine.style.opacity = 1;
-                fadingLine.style.transition = `opacity ${fadeRate}ms`;
-                document.body.appendChild(fadingLine);  // Append fading line to body or container
-
-                // Fade it out
-                setTimeout(() => {
-                    fadingLine.style.opacity = 0;
-                }, 100);  // Allow a short delay before fading
-
-                // Remove it from the DOM after fading
-                setTimeout(() => {
-                    document.body.removeChild(fadingLine);
-                }, fadeRate);  // Remove after the fade-out is complete
-            }
-
-            // Update the display with the current three lines
-            updateDisplay();
-        }
+        // Update the display with both final and interim text
+        updateDisplay();
     }
 };
 
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.continuous = true;
+recognition.interimResults = true;
+recognition.onresult = handleTranscription;
 
-        
+const fadeOutText = () => {
+    transcript.style.transition = `opacity ${fadeRate}ms`;
+    transcript.style.opacity = 0;
+};
+
+let fadeOutTimeout;
+
+const toggleTranscription = () => {
+    isMuted = !isMuted;
+    if (!isMuted) {
+        recognition.start();
+        transcript.innerHTML = 'Listening...';
+        message.style.opacity = 0;
+    } else {
+        recognition.stop();
+        transcript.innerHTML = '';
+        message.innerHTML = "Press 'M' to start transcription";
+        message.style.opacity = 1;
+    }
+};
+
+document.getElementById('start-transcription').addEventListener('click', toggleTranscription);
+
+window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'm') {
+        toggleTranscription();
+    }
+});
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = true;

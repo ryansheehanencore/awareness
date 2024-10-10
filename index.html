@@ -58,6 +58,31 @@
     <script>
         
 ///new code
+
+        let highlightedWords = []; // Array to store words to highlight
+
+// Function to highlight specific words in the transcript
+const highlightWords = (text) => {
+    if (highlightedWords.length === 0) return text; // No words to highlight
+
+    // Create a regex pattern from highlighted words
+    const pattern = highlightedWords.map(word => `\\b${word}\\b`).join('|');
+    const regex = new RegExp(pattern, 'gi'); // 'gi' for global and case-insensitive
+
+    return text.replace(regex, (matched) => `<span style="color: red;">${matched}</span>`);
+};
+
+        // Listen for the 'c' key to prompt for words to highlight
+window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'c') {
+        const input = prompt("Enter a list of words to highlight (comma separated):");
+        if (input) {
+            highlightedWords = input.split(',').map(word => word.trim()); // Store words in the array
+        }
+    }
+});
+
+///old code
         document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         if (isMuted) {
@@ -65,7 +90,7 @@
         }
     }
 });
-///old code
+
         let isMuted = true;
         let transcript = document.getElementById('transcription');
         let message = document.getElementById('message');
@@ -146,6 +171,9 @@
 
                 // Format the text for better readability
                 let formattedText = formatText(finalTranscript + interimTranscript);
+                ///new
+                formattedText = highlightWords(formattedText); // Highlight specific words
+                ///new
                 transcript.innerHTML = formattedText;
                 transcript.style.fontSize = `${fontSize}px`;
                 transcript.style.opacity = 1;

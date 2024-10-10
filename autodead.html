@@ -78,7 +78,6 @@
 
         let isNewSentence = true;  // Flag to track if a new sentence is starting
 
-        // Basic check for common question starters
         const isQuestion = (str) => {
             const questionWords = ['what', 'why', 'how', 'where', 'when', 'who', 'which'];
             const lowerStr = str.toLowerCase();
@@ -90,10 +89,8 @@
         };
 
         const formatText = (text) => {
-            // Split into sentences for better handling
             let sentences = text.split('. ').filter(Boolean);
             let formattedText = sentences.map(sentence => {
-                // Capitalize first letter and check for questions
                 sentence = toSentenceCase(sentence.trim());
                 if (isQuestion(sentence)) {
                     return sentence + '?';
@@ -101,7 +98,6 @@
                 return sentence + '.';
             });
 
-            // Group sentences into paragraphs for better display
             let paragraphLength = 3;
             let paragraphs = [];
             for (let i = 0; i < formattedText.length; i += paragraphLength) {
@@ -120,12 +116,10 @@
                     let transcriptText = event.results[i][0].transcript.trim();
 
                     if (event.results[i].isFinal) {
-                        // For final results, apply sentence case to the first word
                         if (isNewSentence) {
                             transcriptText = toSentenceCase(transcriptText);
                         }
 
-                        // Check if it's a question and format text
                         finalTranscript += transcriptText + '. ';
                         isNewSentence = true;
                     } else {
@@ -134,7 +128,6 @@
                     }
                 }
 
-                // Format the text for better readability
                 let formattedText = formatText(finalTranscript + interimTranscript);
                 transcript.innerHTML = formattedText;
                 transcript.style.fontSize = `${fontSize}px`;
@@ -170,6 +163,24 @@
         window.addEventListener('keydown', (event) => {
             if (event.key.toLowerCase() === 'm') {
                 toggleTranscription();
+            }
+
+            // Adjust font size with ArrowUp and ArrowDown
+            if (event.key === 'ArrowUp') {
+                fontSize += 2;
+                updateMenu();
+            } else if (event.key === 'ArrowDown') {
+                fontSize -= 2;
+                updateMenu();
+            }
+
+            // Adjust fade rate with ArrowLeft and ArrowRight
+            if (event.key === 'ArrowLeft') {
+                fadeRate = Math.max(500, fadeRate - 100);
+                updateMenu();
+            } else if (event.key === 'ArrowRight') {
+                fadeRate += 100;
+                updateMenu();
             }
         });
 

@@ -43,6 +43,7 @@
         let fadeOutTime = 500;
         let transcriptionElement = document.getElementById('transcription');
         let menuElement = document.getElementById('menu');
+        let recognition;
 
         document.addEventListener('keydown', (event) => {
             if (event.key === 'm' || event.key === 'M') {
@@ -53,7 +54,29 @@
         function startTranscription() {
             transcriptionElement.innerHTML = '';
             menuElement.style.display = 'block';
-            // Implement microphone access and real-time transcription here
+            if (!('webkitSpeechRecognition' in window)) {
+                alert('Your browser does not support speech recognition. Please use Chrome.');
+                return;
+            }
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            recognition.onresult = (event) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i].transcript;
+                    } else {
+                        interimTranscript += event.results[i].transcript;
+                    }
+                }
+                transcriptionElement.innerHTML = finalTranscript + '<span style="opacity: 0.5;">' + interimTranscript + '</span>';
+            };
+
+            recognition.start();
         }
 
         // Add event listeners for adjusting settings

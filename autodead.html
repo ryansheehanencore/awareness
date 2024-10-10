@@ -48,26 +48,22 @@
         .visible {
             opacity: 1 !important;
         }
-
-        span {
-            color: white;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
     <div id="menu">Up/Down Font Size: 50 | Left/Right Fade Rate: 1000ms</div>
-    <div id="message">Press '<span id="clickableM">M</span>' to start transcription</div>
+    <div id="message">Press '<span id="start-transcription">M</span>' to start transcription</div>
     <div id="transcription"></div>
 
     <script>
         let isMuted = true;
         let transcript = document.getElementById('transcription');
         let message = document.getElementById('message');
-        let clickableM = document.getElementById('clickableM');
         let menu = document.getElementById('menu');
         let fontSize = 50;
         let fadeRate = 1500;
+        let touchStartX = 0;
+        let touchStartY = 0;
 
         const updateMenu = () => {
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
@@ -80,32 +76,38 @@
             transcript.style.opacity = 0;
         };
 
-        let isNewSentence = true;
+        let isNewSentence = true;  // Flag to track if a new sentence is starting
 
         const toSentenceCase = (str) => {
+            // Capitalize the first letter of the first word
             return str.charAt(0).toUpperCase() + str.slice(1);
         };
 
         const handleTranscription = (event) => {
             if (!isMuted) {
-                let interimTranscript = '';
-                let finalTranscript = '';
+                let interimTranscript = '';  // String to hold interim results
+                let finalTranscript = '';    // String to hold final results
 
                 for (let i = event.resultIndex; i < event.results.length; i++) {
                     let transcriptText = event.results[i][0].transcript.trim();
 
                     if (event.results[i].isFinal) {
+                        // For final results, apply sentence case to the first word
                         if (isNewSentence) {
                             transcriptText = toSentenceCase(transcriptText);
                         }
+
+                        // Append final result and add punctuation
                         finalTranscript += transcriptText + '. ';
-                        isNewSentence = true;
+                        isNewSentence = true;  // Reset flag for the next sentence
                     } else {
+                        // For interim results, simply append the text as it is
                         interimTranscript += transcriptText + ' ';
-                        isNewSentence = false;
+                        isNewSentence = false;  // No need to capitalize for interim results
                     }
                 }
 
+                // Update the displayed transcription with both interim and final results
                 transcript.innerHTML = finalTranscript + interimTranscript;
                 transcript.style.fontSize = `${fontSize}px`;
                 transcript.style.opacity = 1;
@@ -116,24 +118,28 @@
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = true;
-        recognition.interimResults = true;
+        recognition.interimResults = true;  // Enable interim results
         recognition.onresult = handleTranscription;
 
         let fadeOutTimeout;
 
+        // Handle 'M' key press and 'M' click on the message
         const toggleTranscription = () => {
             isMuted = !isMuted;
             if (!isMuted) {
                 recognition.start();
                 transcript.innerHTML = 'Listening...';
-                message.style.opacity = 0;
+                message.style.opacity = 0;  // Hide the message
             } else {
                 recognition.stop();
                 transcript.innerHTML = '';
-                message.innerHTML = "Press '<span id='clickableM'>M</span>' to start transcription";
+                message.innerHTML = "Press 'M' to start transcription";  // Show the message
                 message.style.opacity = 1;
             }
         };
+
+        // Add click event to the 'M' in the message
+        document.getElementById('start-transcription').addEventListener('click', toggleTranscription);
 
         window.addEventListener('keydown', (event) => {
             if (event.key.toLowerCase() === 'm') {
@@ -141,11 +147,40 @@
             }
         });
 
-        clickableM.addEventListener('click', () => {
-            toggleTranscription();
+        // Touch event listeners for swipe detection
+        window.addEventListener('touchstart', (event) => {
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
         });
 
-        updateMenu();
+        window.addEventListener('touchmove', (event) => {
+            const touchEndX = event.touches[0].clientX;
+            const touchEndY = event.touches[0].clientY;
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
+
+            // Detect vertical swipe for font size adjustment
+            if (Math.abs(diffY) > Math.abs(diffX)) {
+                if (diffY < 0) {
+                    fontSize += 2;  // Swipe up to increase font size
+                } else {
+                    fontSize -= 2;  // Swipe down to decrease font size
+                }
+                updateMenu();
+            }
+
+            // Detect horizontal swipe for fade rate adjustment
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX < 0) {
+                    fadeRate = Math.max(500, fadeRate - 100);  // Swipe left to decrease fade rate
+                } else {
+                    fadeRate += 100;  // Swipe right to increase fade rate
+                }
+                updateMenu();
+            }
+        });
+
+        updateMenu();  // Initialize menu
     </script>
 </body>
 </html>

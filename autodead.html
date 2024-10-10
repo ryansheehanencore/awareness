@@ -3,107 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Transcription</title>
+    <title>Voice Transcription Display</title>
     <style>
         body {
+            margin: 0;
+            padding: 0;
             background-color: black;
             color: white;
-            font-size: 50px;
+            font-family: Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
-            margin: 0;
             overflow: hidden;
         }
+
         #transcription {
             text-align: center;
-            width: 80%;
+            font-size: 50px;
+            opacity: 0;
+            transition: opacity 1s;
+            word-wrap: break-word;
+            max-width: 90vw;
         }
+
+        #message {
+            position: absolute;
+            text-align: center;
+            font-size: 40px;
+            color: gray;
+            opacity: 1;
+            transition: opacity 1s;
+        }
+
         #menu {
             position: absolute;
             top: 10px;
             left: 10px;
-            display: none;
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 1s;
+        }
+
+        .visible {
+            opacity: 1 !important;
         }
     </style>
 </head>
 <body>
-    <div id="prompt">Press "M" to start transcription</div>
+    <div id="menu">Up/Down Font Size: 50 | Left/Right Fade Rate: 1000ms</div>
+    <div id="message">Press '<span id="start-transcription">M</span>' to start transcription</div>
     <div id="transcription"></div>
-    <div id="menu">
-        <p>Font Size: <span id="fontSize">50</span></p>
-        <p>Fade-out Time: <span id="fadeTime">500</span>ms</p>
-    </div>
-    <script>
-        let fontSize = 50;
-        let fadeTime = 500;
-        let transcription = document.getElementById('transcription');
-        let prompt = document.getElementById('prompt');
-        let menu = document.getElementById('menu');
-        let fontSizeDisplay = document.getElementById('fontSize');
-        let fadeTimeDisplay = document.getElementById('fadeTime');
 
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'M' || event.key === 'm') {
-                startTranscription();
-            } else if (event.key === 'ArrowUp') {
-                fontSize += 5;
-                updateSettings();
-            } else if (event.key === 'ArrowDown') {
-                fontSize -= 5;
-                updateSettings();
-            } else if (event.key === 'ArrowLeft') {
-                fadeTime -= 100;
-                updateSettings();
-            } else if (event.key === 'ArrowRight') {
-                fadeTime += 100;
-                updateSettings();
+    <script>
+        let isMuted = true;
+        let transcript = document.getElementById('transcription');
+        let message = document.getElementById('message');
+        let menu = document.getElementById('menu');
+        let fontSize = 50;
+        let fadeRate = 1500;
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        const updateMenu = () => {
+            menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
+            menu.classList.add('visible');
+            setTimeout(() => menu.classList.remove('visible'), 1000);
+        };
+
+        const fadeOutText = () => {
+            transcript.style.transition = `opacity ${fadeRate}ms`;
+            transcript.style.opacity = 0;
+        };
+
+        let isNewSentence = true;  // Flag to track if a new sentence is starting
+
+        // Basic check for common question starters
+        const isQuestion = (str) => {
+            const questionWords = ['what', 'why', 'how', 'where', 'when', 'who', 'which'];
+            const lowerStr = str.toLowerCase();
+            return questionWords.some(word => lowerStr.startsWith(word));
+        };
+
+        const toSentenceCase = (str) => {
+            return str.charAt(0).toUpperCase() + str.slice(1);
+        };
+
+        const formatText = (text) => {
+            // Split into sentences for better handling
+            let sentences = text.split('. ').filter(Boolean);
+            let formattedText = sentences.map(sentence => {
+                // Capitalize first letter and check for questions
+                sentence = toSentenceCase(sentence.trim());
+                if (isQuestion(sentence)) {
+                    return sentence + '?';
+                }
+                return sentence + '.';
+            });
+
+            // Group sentences into paragraphs for better display
+            let paragraphLength = 3;
+            let paragraphs = [];
+            for (let i = 0; i < formattedText.length; i += paragraphLength) {
+                paragraphs.push(formattedText.slice(i, i + paragraphLength).join(' '));
+            }
+
+            return paragraphs.join('\n\n');  // Join paragraphs with double line breaks
+        };
+
+        const handleTranscription = (event) => {
+            if (!isMuted) {
+                let interimTranscript = '';  // String to hold interim results
+                let finalTranscript = '';    // String to hold final results
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    let transcriptText = event.results[i][0].transcript.trim();
+
+                    if (event.results[i].isFinal) {
+                        // For final results, apply sentence case to the first word
+                        if (isNewSentence) {
+                            transcriptText = toSentenceCase(transcriptText);
+                        }
+
+                        // Check if it's a question and format text
+                        finalTranscript += transcriptText + '. ';
+                        isNewSentence = true;
+                    } else {
+                        interimTranscript += transcriptText + ' ';
+                        isNewSentence = false;
+                    }
+                }
+
+                // Format the text for better readability
+                let formattedText = formatText(finalTranscript + interimTranscript);
+                transcript.innerHTML = formattedText;
+                transcript.style.fontSize = `${fontSize}px`;
+                transcript.style.opacity = 1;
+                clearTimeout(fadeOutTimeout);
+                fadeOutTimeout = setTimeout(fadeOutText, 1000);
+            }
+        };
+
+        const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.onresult = handleTranscription;
+
+        let fadeOutTimeout;
+
+        const toggleTranscription = () => {
+            isMuted = !isMuted;
+            if (!isMuted) {
+                recognition.start();
+                transcript.innerHTML = 'Listening...';
+                message.style.opacity = 0;
+            } else {
+                recognition.stop();
+                transcript.innerHTML = '';
+                message.innerHTML = "Press 'M' to start transcription";
+                message.style.opacity = 1;
+            }
+        };
+
+        document.getElementById('start-transcription').addEventListener('click', toggleTranscription);
+
+        window.addEventListener('keydown', (event) => {
+            if (event.key.toLowerCase() === 'm') {
+                toggleTranscription();
             }
         });
 
-        function updateSettings() {
-            transcription.style.fontSize = fontSize + 'px';
-            fontSizeDisplay.textContent = fontSize;
-            fadeTimeDisplay.textContent = fadeTime;
-        }
+        window.addEventListener('touchstart', (event) => {
+            touchStartX = event.touches[0].clientX;
+            touchStartY = event.touches[0].clientY;
+        });
 
-        function startTranscription() {
-            prompt.style.display = 'none';
-            menu.style.display = 'block';
-            transcription.style.fontSize = fontSize + 'px';
+        window.addEventListener('touchmove', (event) => {
+            const touchEndX = event.touches[0].clientX;
+            const touchEndY = event.touches[0].clientY;
+            const diffX = touchEndX - touchStartX;
+            const diffY = touchEndY - touchStartY;
 
-            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-
-            recognition.onresult = (event) => {
-                let interimTranscript = '';
-                for (let i = event.resultIndex; i < event.results.length; i++) {
-                    const transcript = event.results[i].transcript;
-                    if (event.results[i].isFinal) {
-                        addPhrase(transcript);
-                    } else {
-                        interimTranscript += transcript;
-                    }
+            if (Math.abs(diffY) > Math.abs(diffX)) {
+                if (diffY < 0) {
+                    fontSize += 2;
+                } else {
+                    fontSize -= 2;
                 }
-                transcription.innerHTML = interimTranscript;
-            };
-
-            recognition.start();
-        }
-
-        function addPhrase(phrase) {
-            const newLine = document.createElement('div');
-            newLine.textContent = phrase;
-            transcription.appendChild(newLine);
-            if (transcription.children.length > 3) {
-                transcription.removeChild(transcription.firstChild);
+                updateMenu();
             }
-            setTimeout(() => {
-                newLine.style.opacity = 0;
-            }, fadeTime);
-        }
+
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (diffX < 0) {
+                    fadeRate = Math.max(500, fadeRate - 100);
+                } else {
+                    fadeRate += 100;
+                }
+                updateMenu();
+            }
+        });
+
+        updateMenu();
     </script>
 </body>
 </html>

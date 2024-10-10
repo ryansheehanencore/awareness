@@ -59,6 +59,20 @@
         
 ///new code
 
+        let highlightColor = 'red'; // Default highlight color
+
+        // Listen for the 'b' key to prompt for color
+window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'b') {
+        const colorInput = prompt("Enter a color name or hex code for the highlights (e.g., 'red', '#ff0000'):");
+        if (colorInput) {
+            highlightColor = colorInput.trim(); // Update the highlight color
+        }
+    }
+});
+
+///old code        
+
         let highlightedWords = []; // Array to store words to highlight
 
 // Function to highlight specific words in the transcript
@@ -69,7 +83,7 @@ const highlightWords = (text) => {
     const pattern = highlightedWords.map(word => `\\b${word}\\b`).join('|');
     const regex = new RegExp(pattern, 'gi'); // 'gi' for global and case-insensitive
 
-    return text.replace(regex, (matched) => `<span style="color: red;">${matched}</span>`);
+    return text.replace(regex, (matched) => `<span style="color: ${highlightColor};">${matched}</span>`);
 };
 
         // Listen for the 'c' key to prompt for words to highlight
@@ -82,7 +96,7 @@ window.addEventListener('keydown', (event) => {
     }
 });
 
-///old code
+
         document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
         if (isMuted) {

@@ -3,198 +3,155 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Captions Tool</title>
+    <title>Live Event Transcription</title>
     <style>
         body {
             margin: 0;
-            background: black;
+            padding: 0;
+            background-color: black;
             color: white;
             font-family: Arial, sans-serif;
-            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
+            overflow: hidden;
         }
+
+        #transcription {
+            font-size: 50px;
+            line-height: 1.5;
+            text-align: center;
+            position: absolute;
+            width: 80%;
+            height: 90%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
         #menu {
-            position: fixed;
+            position: absolute;
             top: 10px;
             left: 10px;
-            font-size: 14px;
-            opacity: 1;
-            transition: opacity 0.5s;
+            background-color: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
         }
-        #transcription-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            height: 100vh;
-            justify-content: center;
+
+        .hidden {
+            display: none;
         }
-        .transcription-line {
-            margin: 10px 0;
-            text-align: center;
-            transition: opacity 0.5s;
-        }
-        #start-prompt {
-            font-size: 24px;
+
+        #prompt {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 40px;
             text-align: center;
         }
     </style>
 </head>
 <body>
+
     <div id="menu">
-        Font Size: <span id="font-size">50</span><br>
-        Fade Time: <span id="fade-time">500</span>ms<br>
-        ↑/↓: Adjust font size<br>
-        ←/→: Adjust fade time
+        Font Size: <span id="fontSizeDisplay">50</span> <br>
+        Fade-out Time: <span id="fadeTimeDisplay">500ms</span>
     </div>
-    
-    <div id="transcription-container">
-        <div id="start-prompt">Press 'M' to start transcription</div>
-    </div>
+
+    <div id="transcription"></div>
+    <div id="prompt">Press or Tap 'M' to Start</div>
 
     <script>
+        const transcriptionDiv = document.getElementById("transcription");
+        const fontSizeDisplay = document.getElementById("fontSizeDisplay");
+        const fadeTimeDisplay = document.getElementById("fadeTimeDisplay");
+        const prompt = document.getElementById("prompt");
+        const menu = document.getElementById("menu");
+
         let fontSize = 50;
         let fadeTime = 500;
-        let transcriptionActive = false;
-        let recognition = null;
-        let currentPhrase = '';
-        let phrasePauseTimeout = null;
-        const PHRASE_PAUSE = 300; // ms before considering a phrase complete
-        
-        const lines = [];
-        const menu = document.getElementById('menu');
-        const startPrompt = document.getElementById('start-prompt');
-        const transcriptionContainer = document.getElementById('transcription-container');
-        const fontSizeDisplay = document.getElementById('font-size');
-        const fadeTimeDisplay = document.getElementById('fade-time');
+        let currentText = '';
+        let lines = [];
+        let recognizing = false;
 
-        function updateSettings() {
-            fontSizeDisplay.textContent = fontSize;
-            fadeTimeDisplay.textContent = fadeTime;
-            document.querySelectorAll('.transcription-line').forEach(line => {
-                line.style.fontSize = `${fontSize}px`;
-            });
-        }
-
-        function addLine(text) {
-            const line = document.createElement('div');
-            line.className = 'transcription-line';
-            line.style.fontSize = `${fontSize}px`;
-            line.textContent = text;
-            
-            lines.push(line);
-            transcriptionContainer.appendChild(line);
-            
-            if (lines.length > 3) {
-                const oldestLine = lines.shift();
-                oldestLine.style.opacity = '0';
-                setTimeout(() => oldestLine.remove(), fadeTime);
-            }
-        }
-
-        function startTranscription() {
-            if (transcriptionActive) return;
-            
-            recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+        // Transcription function
+        function startRecognition() {
+            const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
             recognition.continuous = true;
             recognition.interimResults = true;
 
-            recognition.onresult = (event) => {
-                const result = event.results[event.results.length - 1];
-                const transcript = result[0].transcript;
-                
-                if (result.isFinal) {
-                    if (currentPhrase) {
-                        addLine(currentPhrase);
-                        currentPhrase = '';
-                    }
-                    addLine(transcript);
-                } else {
-                    currentPhrase = transcript;
-                    clearTimeout(phrasePauseTimeout);
-                    phrasePauseTimeout = setTimeout(() => {
-                        if (currentPhrase) {
-                            addLine(currentPhrase);
-                            currentPhrase = '';
-                        }
-                    }, PHRASE_PAUSE);
+            recognition.onresult = function(event) {
+                const transcript = Array.from(event.results)
+                    .map(result => result[0].transcript)
+                    .join('');
+
+                if (event.results[0].isFinal) {
+                    currentText += transcript + " ";
+                    updateText(currentText);
                 }
             };
 
-            recognition.onend = () => {
-                if (transcriptionActive) {
-                    recognition.start();
-                }
-            };
-
-            transcriptionActive = true;
-            startPrompt.style.display = 'none';
             recognition.start();
-            
-            setTimeout(() => {
-                menu.style.opacity = '0';
-            }, 3000);
         }
 
-        document.addEventListener('keydown', (e) => {
-            switch(e.key) {
-                case 'm':
-                case 'M':
-                    startTranscription();
-                    break;
+        // Update text on screen
+        function updateText(newText) {
+            let words = newText.split(" ");
+            words = words.filter(Boolean);
+            if (words.length > 0) {
+                transcriptionDiv.innerText = words.join(" ");
+            }
+        }
+
+        // Fade out the top line
+        function fadeTopLine() {
+            if (lines.length > 3) {
+                lines.shift();
+                updateText(lines.join(" "));
+            }
+        }
+
+        // Key press and swipe handling for settings adjustments
+        function handleSettings(event) {
+            switch (event.key) {
                 case 'ArrowUp':
-                    fontSize = Math.min(fontSize + 2, 100);
-                    updateSettings();
+                    fontSize += 5;
                     break;
                 case 'ArrowDown':
-                    fontSize = Math.max(fontSize - 2, 20);
-                    updateSettings();
+                    fontSize = Math.max(5, fontSize - 5);
                     break;
                 case 'ArrowLeft':
-                    fadeTime = Math.max(fadeTime - 100, 100);
-                    updateSettings();
+                    fadeTime = Math.max(100, fadeTime - 100);
                     break;
                 case 'ArrowRight':
-                    fadeTime = Math.min(fadeTime + 100, 2000);
-                    updateSettings();
+                    fadeTime += 100;
                     break;
             }
-        });
+            fontSizeDisplay.textContent = fontSize;
+            fadeTimeDisplay.textContent = `${fadeTime}ms`;
+            transcriptionDiv.style.fontSize = `${fontSize}px`;
+        }
 
-        // Touch events for mobile support
-        let touchStartY = 0;
-        let touchStartX = 0;
-
-        document.addEventListener('touchstart', (e) => {
-            touchStartY = e.touches[0].clientY;
-            touchStartX = e.touches[0].clientX;
-        });
-
-        document.addEventListener('touchmove', (e) => {
-            const touchY = e.touches[0].clientY;
-            const touchX = e.touches[0].clientX;
-            const deltaY = touchStartY - touchY;
-            const deltaX = touchStartX - touchX;
-            
-            if (Math.abs(deltaY) > Math.abs(deltaX)) {
-                // Vertical swipe
-                if (deltaY > 0) {
-                    fontSize = Math.min(fontSize + 2, 100);
-                } else {
-                    fontSize = Math.max(fontSize - 2, 20);
-                }
+        // Start transcription when "M" is pressed
+        document.addEventListener('keydown', (event) => {
+            if (event.key.toLowerCase() === 'm' && !recognizing) {
+                recognizing = true;
+                prompt.classList.add('hidden');
+                menu.style.display = 'block';
+                startRecognition();
             } else {
-                // Horizontal swipe
-                if (deltaX > 0) {
-                    fadeTime = Math.max(fadeTime - 100, 100);
-                } else {
-                    fadeTime = Math.min(fadeTime + 100, 2000);
-                }
+                handleSettings(event);
             }
-            updateSettings();
+        });
+
+        // Swipe handling (for mobile devices)
+        document.addEventListener('touchstart', (event) => {
+            // Placeholder for swipe logic
         });
     </script>
+
 </body>
 </html>

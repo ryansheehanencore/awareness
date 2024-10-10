@@ -61,9 +61,12 @@
         let message = document.getElementById('message');
         let menu = document.getElementById('menu');
         let fontSize = 30;
-        let fadeRate = 500; ///default fade rate
+        let fadeRate = 500; // Default fade rate
         let touchStartX = 0;
         let touchStartY = 0;
+        let lines = []; // To store the current lines of text
+        let maxLines = 3; // Maximum number of lines to display
+        let interimLine = ''; // To temporarily store the interim transcript (live text)
 
         const updateMenu = () => {
             menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
@@ -76,117 +79,51 @@
             transcript.style.opacity = 0;
         };
 
-        let isNewSentence = true;  // Flag to track if a new sentence is starting
+        const updateDisplay = () => {
+            // Combine lines with the current interim text (live transcription)
+            let displayText = [...lines, interimLine].join('<br>');
+            transcript.innerHTML = displayText; // Display the combined text
+            transcript.style.fontSize = `${fontSize}px`;
+            transcript.style.opacity = 1;
 
-        const isQuestion = (str) => {
-            const questionWords = ['what', 'why', 'how', 'where', 'when', 'who', 'which'];
-            const lowerStr = str.toLowerCase();
-            return questionWords.some(word => lowerStr.startsWith(word));
+            clearTimeout(fadeOutTimeout);
+            fadeOutTimeout = setTimeout(fadeOutText, 2000); // Delay fade-out
         };
 
         const toSentenceCase = (str) => {
             return str.charAt(0).toUpperCase() + str.slice(1);
         };
 
-        const formatText = (text) => {
-            let sentences = text.split('. ').filter(Boolean);
-            let formattedText = sentences.map(sentence => {
-                sentence = toSentenceCase(sentence.trim());
-                if (isQuestion(sentence)) {
-                    return sentence + '?';
+        const handleTranscription = (event) => {
+            if (!isMuted) {
+                interimLine = ''; // Clear previous interim transcript
+                let finalTranscript = ''; // To store the final transcript
+
+                for (let i = event.resultIndex; i < event.results.length; i++) {
+                    let transcriptText = event.results[i][0].transcript.trim();
+
+                    if (event.results[i].isFinal) {
+                        // For final results, format the sentence and add to the permanent lines array
+                        transcriptText = toSentenceCase(transcriptText);
+                        finalTranscript += transcriptText + ' ';
+
+                        // Add final transcript to the lines array
+                        lines.push(finalTranscript.trim());
+
+                        // Limit to three lines; remove the oldest if needed
+                        if (lines.length > maxLines) {
+                            lines.shift(); // Remove the first (oldest) line
+                        }
+                    } else {
+                        // This is interim (live) text, so display it immediately
+                        interimLine = transcriptText;
+                    }
                 }
-                return sentence + '.';
-            });
 
-            let paragraphLength = 3;
-            let paragraphs = [];
-            for (let i = 0; i < formattedText.length; i += paragraphLength) {
-                paragraphs.push(formattedText.slice(i, i + paragraphLength).join(' '));
+                // Update the display with both final and interim text
+                updateDisplay();
             }
-
-            return paragraphs.join('\n\n');  // Join paragraphs with double line breaks
         };
-
-let lines = []; // To store the current lines of text
-let maxLines = 3; // Maximum number of lines to display
-let interimLine = ''; // To temporarily store the interim transcript (live text)
-
-const updateDisplay = () => {
-    // Combine lines with the current interim text (live transcription)
-    let displayText = [...lines, interimLine].join('<br>');
-    transcript.innerHTML = displayText; // Display the combined text
-    transcript.style.fontSize = `${fontSize}px`;
-    transcript.style.opacity = 1;
-
-    clearTimeout(fadeOutTimeout);
-    fadeOutTimeout = setTimeout(fadeOutText, 2000); // Delay fade-out
-};
-
-const handleTranscription = (event) => {
-    if (!isMuted) {
-        interimLine = ''; // Clear previous interim transcript
-        let finalTranscript = ''; // To store the final transcript
-
-        for (let i = event.resultIndex; i < event.results.length; i++) {
-            let transcriptText = event.results[i][0].transcript.trim();
-
-            if (event.results[i].isFinal) {
-                // For final results, format the sentence and add to the permanent lines array
-                transcriptText = toSentenceCase(transcriptText);
-                finalTranscript += transcriptText + ' ';
-                isNewSentence = true;
-
-                // Add final transcript to the lines array
-                lines.push(finalTranscript.trim());
-
-                // Limit to three lines; remove the oldest if needed
-                if (lines.length > maxLines) {
-                    lines.shift(); // Remove the first (oldest) line
-                }
-            } else {
-                // This is interim (live) text, so display it immediately
-                interimLine = transcriptText;
-            }
-        }
-
-        // Update the display with both final and interim text
-        updateDisplay();
-    }
-};
-
-const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-recognition.continuous = true;
-recognition.interimResults = true;
-recognition.onresult = handleTranscription;
-
-const fadeOutText = () => {
-    transcript.style.transition = `opacity ${fadeRate}ms`;
-    transcript.style.opacity = 0;
-};
-
-let fadeOutTimeout;
-
-const toggleTranscription = () => {
-    isMuted = !isMuted;
-    if (!isMuted) {
-        recognition.start();
-        transcript.innerHTML = 'Listening...';
-        message.style.opacity = 0;
-    } else {
-        recognition.stop();
-        transcript.innerHTML = '';
-        message.innerHTML = "Press 'M' to start transcription";
-        message.style.opacity = 1;
-    }
-};
-
-document.getElementById('start-transcription').addEventListener('click', toggleTranscription);
-
-window.addEventListener('keydown', (event) => {
-    if (event.key.toLowerCase() === 'm') {
-        toggleTranscription();
-    }
-});
 
         const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
         recognition.continuous = true;
@@ -214,24 +151,6 @@ window.addEventListener('keydown', (event) => {
         window.addEventListener('keydown', (event) => {
             if (event.key.toLowerCase() === 'm') {
                 toggleTranscription();
-            }
-
-            // Adjust font size with ArrowUp and ArrowDown
-            if (event.key === 'ArrowUp') {
-                fontSize += 2;
-                updateMenu();
-            } else if (event.key === 'ArrowDown') {
-                fontSize -= 2;
-                updateMenu();
-            }
-
-            // Adjust fade rate with ArrowLeft and ArrowRight
-            if (event.key === 'ArrowLeft') {
-                fadeRate = Math.max(500, fadeRate - 100);
-                updateMenu();
-            } else if (event.key === 'ArrowRight') {
-                fadeRate += 100;
-                updateMenu();
             }
         });
 

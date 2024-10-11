@@ -1,70 +1,104 @@
-let censoredWords = [];
+let highlightColor = 'red'; // Default highlight color
+
+window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'b') {
+        const colorInput = prompt("Enter a color name or hex code for the highlights (e.g., 'red', '#ff0000'):");
+        if (colorInput) {
+            highlightColor = colorInput.trim();
+            localStorage.setItem('highlightColor', highlightColor);
+        }
+    }
+});
+
 let highlightedWords = [];
-let importantNames = [];
 
-let censoredColor = 'black';
-let highlightedColor = 'red';
-let importantNamesColor = 'blue';
-
-let fontSize = 16;
-let fadeRate = 500;
-let isMuted = true; // Start in a muted state so that 'M' can toggle it
-let isNewSentence = true;
-let fadeOutTimeout;
-
-const transcript = document.getElementById('transcript');
-const menu = document.getElementById('menu');
-
-// Speech recognition setup
-const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
-recognition.continuous = true;
-recognition.interimResults = true;
-
-recognition.onresult = (event) => {
-    handleTranscription(event);
+const highlightWords = (text) => {
+    if (highlightedWords.length === 0) return text;
+    const pattern = highlightedWords.map(word => `\\b${word}\\b`).join('|');
+    const regex = new RegExp(pattern, 'gi');
+    return text.replace(regex, (matched) => `<span style="color: ${highlightColor};">${matched}</span>`);
 };
 
-recognition.onerror = (event) => {
-    console.error('Speech recognition error:', event.error);
+window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'c') {
+        const input = prompt("Enter a list of words to highlight (comma separated):");
+        if (input) {
+            highlightedWords = input.split(',').map(word => word.trim());
+            localStorage.setItem('highlightedWords', JSON.stringify(highlightedWords));
+        }
+    }
+});
+
+const storedWords = localStorage.getItem('highlightedWords');
+const storedColor = localStorage.getItem('highlightColor');
+
+if (storedWords) {
+    highlightedWords = JSON.parse(storedWords);
+}
+
+if (storedColor) {
+    highlightColor = storedColor;
+}
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+        if (isMuted) {
+            toggleTranscription();
+        }
+    }
+});
+
+let isMuted = true;
+let transcript = document.getElementById('transcription');
+let message = document.getElementById('message');
+let menu = document.getElementById('menu');
+let fontSize = 50;
+let fadeRate = 1500;
+let touchStartX = 0;
+let touchStartY = 0;
+
+const updateMenu = () => {
+    menu.innerHTML = `Up/Down Font Size: ${fontSize} | Left/Right Fade Rate: ${fadeRate}ms`;
+    menu.classList.add('visible');
+    setTimeout(() => menu.classList.remove('visible'), 1000);
 };
 
-// Function to convert text to sentence case
-const toSentenceCase = (text) => {
-    return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-};
-
-// Function to fade out text after a delay
 const fadeOutText = () => {
+    transcript.style.transition = `opacity ${fadeRate}ms`;
     transcript.style.opacity = 0;
 };
 
-// Function to highlight words based on multiple categories
-const highlightMultipleWords = (text) => {
-    // Highlight censored words
-    if (censoredWords.length > 0) {
-        const censoredPattern = censoredWords.map(word => `\\b${word}\\b`).join('|');
-        const censoredRegex = new RegExp(censoredPattern, 'gi');
-        text = text.replace(censoredRegex, (matched) => `<span style="color: ${censoredColor};">${matched}</span>`);
-    }
+let isNewSentence = true;
 
-    // Highlight highlighted words
-    if (highlightedWords.length > 0) {
-        const highlightedPattern = highlightedWords.map(word => `\\b${word}\\b`).join('|');
-        const highlightedRegex = new RegExp(highlightedPattern, 'gi');
-        text = text.replace(highlightedRegex, (matched) => `<span style="color: ${highlightedColor};">${matched}</span>`);
-    }
-
-    // Highlight important names
-    if (importantNames.length > 0) {
-        const importantPattern = importantNames.map(word => `\\b${word}\\b`).join('|');
-        const importantRegex = new RegExp(importantPattern, 'gi');
-        text = text.replace(importantRegex, (matched) => `<span style="color: ${importantNamesColor};">${matched}</span>`);
-    }
-
-    return text;
+const isQuestion = (str) => {
+    const questionWords = ['what', 'why', 'how', 'where', 'when', 'who', 'which', 'can'];
+    const lowerStr = str.toLowerCase();
+    return questionWords.some(word => lowerStr.startsWith(word));
 };
 
-// Handle transcription and apply formatting
+const toSentenceCase = (str) => {
+    return str.charAt(0).toUpperCase() + str.slice(1);
+};
+
+const formatText = (text) => {
+    let sentences = text.split('. ').filter(Boolean);
+    let formattedText = sentences.map(sentence => {
+        sentence = toSentenceCase(sentence.trim());
+        if (isQuestion(sentence)) {
+            return sentence + '?';
+        }
+        return sentence + '.';
+    });
+
+    let paragraphLength = 3;
+    let paragraphs = [];
+    for (let i = 0; i < formattedText.length; i += paragraphLength) {
+        paragraphs.push(formattedText.slice(i, i + paragraphLength).join(' '));
+    }
+
+    return paragraphs.join('\n\n');
+};
+
 const handleTranscription = (event) => {
     if (!isMuted) {
         let interimTranscript = '';
@@ -77,6 +111,7 @@ const handleTranscription = (event) => {
                 if (isNewSentence) {
                     transcriptText = toSentenceCase(transcriptText);
                 }
+
                 finalTranscript += transcriptText + '. ';
                 isNewSentence = true;
             } else {
@@ -85,99 +120,107 @@ const handleTranscription = (event) => {
             }
         }
 
-        let formattedText = finalTranscript + interimTranscript;
-        formattedText = highlightMultipleWords(formattedText); // Use updated function
+        let formattedText = formatText(finalTranscript + interimTranscript);
+        formattedText = highlightWords(formattedText);
         transcript.innerHTML = formattedText;
         transcript.style.fontSize = `${fontSize}px`;
         transcript.style.opacity = 1;
         clearTimeout(fadeOutTimeout);
-        fadeOutTimeout = setTimeout(fadeOutText, fadeRate);
+        fadeOutTimeout = setTimeout(fadeOutText, 500);
     }
 };
 
-// Start/stop transcription with the 'M' key
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.continuous = true;
+recognition.interimResults = true;
+recognition.onresult = handleTranscription;
+
+recognition.onerror = (event) => {
+    console.error('Error occurred in recognition: ', event.error);
+};
+
+recognition.onend = () => {
+    console.warn('Speech recognition service disconnected. Attempting to restart...');
+    setTimeout(() => {
+        if (!isMuted) {
+            recognition.start();
+            console.log('Speech recognition restarted.');
+        }
+    }, 1000);
+};
+
+let fadeOutTimeout;
+
+const toggleTranscription = () => {
+    isMuted = !isMuted;
+    if (!isMuted) {
+        recognition.start();
+        transcript.innerHTML = 'Listening...';
+        message.style.opacity = 0;
+    } else {
+        recognition.stop();
+        transcript.innerHTML = '';
+        message.innerHTML = "Press 'M' to start transcription";
+        message.style.opacity = 1;
+    }
+};
+
+document.getElementById('start-transcription').addEventListener('click', toggleTranscription);
+
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'm') {
-        isMuted = !isMuted;
-
-        if (!isMuted) {
-            console.log('Starting transcription...');
-            recognition.start();
-        } else {
-            console.log('Stopping transcription...');
-            recognition.stop();
-        }
+        toggleTranscription();
     }
-});
 
-// Listen for the 'W' key to bring up the menu for setting flagged words and colors
-window.addEventListener('keydown', (event) => {
-    if (event.key.toLowerCase() === 'w') {
-        const menuChoice = prompt("Choose a category to modify: \n1: Censored Words \n2: Highlighted Words \n3: Important Names");
+    if (event.key === 'ArrowUp') {
+        fontSize += 2;
+        updateMenu();
+    }
 
-        if (menuChoice === '1') {
-            const words = prompt("Enter censored words (comma-separated):");
-            if (words) censoredWords = words.split(',').map(word => word.trim());
-            const color = prompt("Enter a color for censored words (name or hex):", censoredColor);
-            if (color) censoredColor = color.trim();
-        } else if (menuChoice === '2') {
-            const words = prompt("Enter highlighted words (comma-separated):");
-            if (words) highlightedWords = words.split(',').map(word => word.trim());
-            const color = prompt("Enter a color for highlighted words (name or hex):", highlightedColor);
-            if (color) highlightedColor = color.trim();
-        } else if (menuChoice === '3') {
-            const words = prompt("Enter important names (comma-separated):");
-            if (words) importantNames = words.split(',').map(word => word.trim());
-            const color = prompt("Enter a color for important names (name or hex):", importantNamesColor);
-            if (color) importantNamesColor = color.trim();
-        }
+    if (event.key === 'ArrowDown') {
+        fontSize = Math.max(10, fontSize - 2);
+        updateMenu();
+    }
 
-        // Save in localStorage for persistence
-        localStorage.setItem('censoredWords', JSON.stringify(censoredWords));
-        localStorage.setItem('highlightedWords', JSON.stringify(highlightedWords));
-        localStorage.setItem('importantNames', JSON.stringify(importantNames));
-        localStorage.setItem('censoredColor', censoredColor);
-        localStorage.setItem('highlightedColor', highlightedColor);
-        localStorage.setItem('importantNamesColor', importantNamesColor);
+    if (event.key === 'ArrowRight') {
+        fadeRate += 100;
+        updateMenu();
+    }
 
-        // Update menu display
+    if (event.key === 'ArrowLeft') {
+        fadeRate = Math.max(500, fadeRate - 100);
         updateMenu();
     }
 });
 
-// Retrieve stored data for persistence
-const storedCensoredWords = localStorage.getItem('censoredWords');
-const storedHighlightedWords = localStorage.getItem('highlightedWords');
-const storedImportantNames = localStorage.getItem('importantNames');
-const storedCensoredColor = localStorage.getItem('censoredColor');
-const storedHighlightedColor = localStorage.getItem('highlightedColor');
-const storedImportantNamesColor = localStorage.getItem('importantNamesColor');
-
-if (storedCensoredWords) censoredWords = JSON.parse(storedCensoredWords);
-if (storedHighlightedWords) highlightedWords = JSON.parse(storedHighlightedWords);
-if (storedImportantNames) importantNames = JSON.parse(storedImportantNames);
-
-if (storedCensoredColor) censoredColor = storedCensoredColor;
-if (storedHighlightedColor) highlightedColor = storedHighlightedColor;
-if (storedImportantNamesColor) importantNamesColor = storedImportantNamesColor;
-
-// Update menu display with current settings
-const updateMenu = () => {
-    menu.innerHTML = `Font Size: ${fontSize}px | Fade Rate: ${fadeRate}ms <br> Censored Color: ${censoredColor}, Highlighted Color: ${highlightedColor}, Important Names Color: ${importantNamesColor}`;
-    menu.classList.add('visible');
-    setTimeout(() => menu.classList.remove('visible'), 2000);
-};
-
-// Increase/decrease font size and fade rate with arrow keys
-window.addEventListener('keydown', (event) => {
-    if (event.key === 'ArrowUp') {
-        fontSize += 1;
-    } else if (event.key === 'ArrowDown') {
-        fontSize -= 1;
-    } else if (event.key === 'ArrowLeft') {
-        fadeRate += 100;
-    } else if (event.key === 'ArrowRight') {
-        fadeRate -= 100;
-    }
-    updateMenu();
+window.addEventListener('touchstart', (event) => {
+    touchStartX = event.touches[0].clientX;
+    touchStartY = event.touches[0].clientY;
 });
+
+window.addEventListener('touchmove', (event) => {
+    const touchEndX = event.touches[0].clientX;
+    const touchEndY = event.touches[0].clientY;
+    const diffX = touchEndX - touchStartX;
+    const diffY = touchEndY - touchStartY;
+
+    if (Math.abs(diffY) > Math.abs(diffX)) {
+        if (diffY < 0) {
+            fontSize += 2;
+        } else {
+            fontSize -= 2;
+        }
+        updateMenu();
+    }
+
+    if (Math.abs(diffX) > Math.abs(diffY)) {
+        if (diffX < 0) {
+            fadeRate = Math.max(500, fadeRate - 100);
+        } else {
+            fadeRate += 100;
+        }
+        updateMenu();
+    }
+});
+
+updateMenu();

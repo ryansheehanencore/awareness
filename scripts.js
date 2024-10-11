@@ -89,4 +89,67 @@ window.addEventListener('keydown', (event) => {
 
         if (menuChoice === '1') {
             const words = prompt("Enter censored words (comma-separated):");
-            if (words) censoredWords = words.split(',').ma
+            if (words) censoredWords = words.split(',').map(word => word.trim());
+            const color = prompt("Enter a color for censored words (name or hex):", censoredColor);
+            if (color) censoredColor = color.trim();
+        } else if (menuChoice === '2') {
+            const words = prompt("Enter highlighted words (comma-separated):");
+            if (words) highlightedWords = words.split(',').map(word => word.trim());
+            const color = prompt("Enter a color for highlighted words (name or hex):", highlightedColor);
+            if (color) highlightedColor = color.trim();
+        } else if (menuChoice === '3') {
+            const words = prompt("Enter important names (comma-separated):");
+            if (words) importantNames = words.split(',').map(word => word.trim());
+            const color = prompt("Enter a color for important names (name or hex):", importantNamesColor);
+            if (color) importantNamesColor = color.trim();
+        }
+
+        // Save in localStorage for persistence
+        localStorage.setItem('censoredWords', JSON.stringify(censoredWords));
+        localStorage.setItem('highlightedWords', JSON.stringify(highlightedWords));
+        localStorage.setItem('importantNames', JSON.stringify(importantNames));
+        localStorage.setItem('censoredColor', censoredColor);
+        localStorage.setItem('highlightedColor', highlightedColor);
+        localStorage.setItem('importantNamesColor', importantNamesColor);
+
+        // Update menu display
+        updateMenu();
+    }
+});
+
+// Retrieve stored data for persistence
+const storedCensoredWords = localStorage.getItem('censoredWords');
+const storedHighlightedWords = localStorage.getItem('highlightedWords');
+const storedImportantNames = localStorage.getItem('importantNames');
+const storedCensoredColor = localStorage.getItem('censoredColor');
+const storedHighlightedColor = localStorage.getItem('highlightedColor');
+const storedImportantNamesColor = localStorage.getItem('importantNamesColor');
+
+if (storedCensoredWords) censoredWords = JSON.parse(storedCensoredWords);
+if (storedHighlightedWords) highlightedWords = JSON.parse(storedHighlightedWords);
+if (storedImportantNames) importantNames = JSON.parse(storedImportantNames);
+
+if (storedCensoredColor) censoredColor = storedCensoredColor;
+if (storedHighlightedColor) highlightedColor = storedHighlightedColor;
+if (storedImportantNamesColor) importantNamesColor = storedImportantNamesColor;
+
+// Update menu display with current settings
+const updateMenu = () => {
+    menu.innerHTML = `Font Size: ${fontSize}px | Fade Rate: ${fadeRate}ms <br> Censored Color: ${censoredColor}, Highlighted Color: ${highlightedColor}, Important Names Color: ${importantNamesColor}`;
+    menu.classList.add('visible');
+    setTimeout(() => menu.classList.remove('visible'), 2000);
+};
+
+// Increase/decrease font size and fade rate with arrow keys
+window.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowUp') {
+        fontSize += 1;
+    } else if (event.key === 'ArrowDown') {
+        fontSize -= 1;
+    } else if (event.key === 'ArrowLeft') {
+        fadeRate += 100;
+    } else if (event.key === 'ArrowRight') {
+        fadeRate -= 100;
+    }
+    updateMenu();
+});

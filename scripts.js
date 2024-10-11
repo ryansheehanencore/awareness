@@ -156,7 +156,7 @@ const toggleTranscription = () => {
     } else {
         recognition.stop();
         transcript.innerHTML = '';
-        message.innerHTML = "Press 'M' to start transcription";
+        message.innerHTML = "Press 'M' to toggle transcription";
         message.style.opacity = 1;
     }
 };

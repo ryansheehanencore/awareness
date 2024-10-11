@@ -8,12 +8,21 @@ let importantNamesColor = 'blue';
 
 let fontSize = 16;
 let fadeRate = 500;
-let isMuted = false;
+let isMuted = false; // This is used to start/stop transcription with the 'M' key
 let isNewSentence = true;
 let fadeOutTimeout;
 
 const transcript = document.getElementById('transcript');
 const menu = document.getElementById('menu');
+
+// Speech recognition setup
+const recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+recognition.continuous = true;
+recognition.interimResults = true;
+
+recognition.onresult = (event) => {
+    handleTranscription(event);
+};
 
 // Function to convert text to sentence case
 const toSentenceCase = (text) => {
@@ -82,7 +91,19 @@ const handleTranscription = (event) => {
     }
 };
 
-// Listen for the 'w' key to bring up the menu for setting flagged words and colors
+// Start/stop transcription with the 'M' key
+window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'm') {
+        isMuted = !isMuted;
+        if (!isMuted) {
+            recognition.start();
+        } else {
+            recognition.stop();
+        }
+    }
+});
+
+// Listen for the 'W' key to bring up the menu for setting flagged words and colors
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'w') {
         const menuChoice = prompt("Choose a category to modify: \n1: Censored Words \n2: Highlighted Words \n3: Important Names");
@@ -140,13 +161,6 @@ const updateMenu = () => {
     setTimeout(() => menu.classList.remove('visible'), 2000);
 };
 
-
-document.getElementById('start-transcription').addEventListener('click', toggleTranscription);
-
-        window.addEventListener('keydown', (event) => {
-    if (event.key.toLowerCase() === 'm') {
-        toggleTranscription();
-    }
 // Increase/decrease font size and fade rate with arrow keys
 window.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowUp') {

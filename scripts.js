@@ -8,7 +8,7 @@ let importantNamesColor = 'blue';
 
 let fontSize = 16;
 let fadeRate = 500;
-let isMuted = false; // This is used to start/stop transcription with the 'M' key
+let isMuted = true; // Start in a muted state so that 'M' can toggle it
 let isNewSentence = true;
 let fadeOutTimeout;
 
@@ -22,6 +22,10 @@ recognition.interimResults = true;
 
 recognition.onresult = (event) => {
     handleTranscription(event);
+};
+
+recognition.onerror = (event) => {
+    console.error('Speech recognition error:', event.error);
 };
 
 // Function to convert text to sentence case
@@ -95,9 +99,12 @@ const handleTranscription = (event) => {
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'm') {
         isMuted = !isMuted;
+
         if (!isMuted) {
+            console.log('Starting transcription...');
             recognition.start();
         } else {
+            console.log('Stopping transcription...');
             recognition.stop();
         }
     }

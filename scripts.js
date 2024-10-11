@@ -1,52 +1,48 @@
-let highlightColor = 'red'; // Default highlight color
-
-window.addEventListener('keydown', (event) => {
-    if (event.key.toLowerCase() === 'b') {
-        const colorInput = prompt("Enter a color name or hex code for the highlights (e.g., 'red', '#ff0000'):");
-        if (colorInput) {
-            highlightColor = colorInput.trim();
-            localStorage.setItem('highlightColor', highlightColor);
-        }
-    }
-});
-
-let highlightedWords = [];
-
-const highlightWords = (text) => {
-    if (highlightedWords.length === 0) return text;
-    const pattern = highlightedWords.map(word => `\\b${word}\\b`).join('|');
-    const regex = new RegExp(pattern, 'gi');
-    return text.replace(regex, (matched) => `<span style="color: ${highlightColor};">${matched}</span>`);
+let wordCategories = {
+    'spicy': { words: [], color: 'red' },
+    'important': { words: [], color: 'blue' },
+    'names': { words: [], color: 'green' }
 };
 
+// Prompt to pick a category, enter words, and set color
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'c') {
-        const input = prompt("Enter a list of words to highlight (comma separated):");
-        if (input) {
-            highlightedWords = input.split(',').map(word => word.trim());
-            localStorage.setItem('highlightedWords', JSON.stringify(highlightedWords));
+        const category = prompt("Choose a category: 'spicy', 'important', or 'names'");
+        if (category && wordCategories[category]) {
+            const input = prompt("Enter a list of words to highlight (comma separated):");
+            if (input) {
+                wordCategories[category].words = input.split(',').map(word => word.trim());
+                const colorInput = prompt(`Enter a color for ${category} words (e.g., 'red', '#ff0000'):`);
+                if (colorInput) {
+                    wordCategories[category].color = colorInput.trim();
+                }
+                localStorage.setItem('wordCategories', JSON.stringify(wordCategories));
+            }
+        } else {
+            alert("Invalid category! Please choose from 'spicy', 'important', or 'names'.");
         }
     }
 });
 
-const storedWords = localStorage.getItem('highlightedWords');
-const storedColor = localStorage.getItem('highlightColor');
+const highlightWords = (text) => {
+    let highlightedText = text;
 
-if (storedWords) {
-    highlightedWords = JSON.parse(storedWords);
+    Object.keys(wordCategories).forEach(category => {
+        const { words, color } = wordCategories[category];
+        if (words.length === 0) return;
+        const pattern = words.map(word => `\\b${word}\\b`).join('|');
+        const regex = new RegExp(pattern, 'gi');
+        highlightedText = highlightedText.replace(regex, (matched) => `<span style="color: ${color};">${matched}</span>`);
+    });
+
+    return highlightedText;
+};
+
+// Load stored categories from localStorage if available
+const storedCategories = localStorage.getItem('wordCategories');
+if (storedCategories) {
+    wordCategories = JSON.parse(storedCategories);
 }
-
-if (storedColor) {
-    highlightColor = storedColor;
-}
-
-document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') {
-        if (isMuted) {
-            toggleTranscription();
-        }
-    }
-});
 
 let isMuted = true;
 let transcript = document.getElementById('transcription');
@@ -121,7 +117,7 @@ const handleTranscription = (event) => {
         }
 
         let formattedText = formatText(finalTranscript + interimTranscript);
-        formattedText = highlightWords(formattedText);
+        formattedText = highlightWords(formattedText); // Apply the highlights here
         transcript.innerHTML = formattedText;
         transcript.style.fontSize = `${fontSize}px`;
         transcript.style.opacity = 1;

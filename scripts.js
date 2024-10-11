@@ -140,6 +140,13 @@ const updateMenu = () => {
     setTimeout(() => menu.classList.remove('visible'), 2000);
 };
 
+
+document.getElementById('start-transcription').addEventListener('click', toggleTranscription);
+
+        window.addEventListener('keydown', (event) => {
+    if (event.key.toLowerCase() === 'm') {
+        toggleTranscription();
+    }
 // Increase/decrease font size and fade rate with arrow keys
 window.addEventListener('keydown', (event) => {
     if (event.key === 'ArrowUp') {

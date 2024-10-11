@@ -31,7 +31,7 @@ body {
 
 #menu {
     position: absolute;
-    text-align: bottom;
+       bottom: 10%;
     font-size: 40px;
     opacity: 0;
     transition: opacity 1s;

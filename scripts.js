@@ -2,7 +2,7 @@ let wordCategories = {
     'spicy': { words: [], color: 'red' },
     'important': { words: [], color: 'blue' },
     'names': { words: [], color: 'green' },
-    'super': { words: [], behavior: 'rainbow' },  // Added 'super' category
+    'boop': { words: [], behavior: 'rainbow' },  // Added 'super' category
 };
 
 // Prompt to pick a category, enter words, and set color
@@ -27,7 +27,7 @@ let wordCategories = {
 
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'c') {
-        let category = prompt("Choose a category: 'spicy', 'important', 'names', or 'super'").trim().toLowerCase(); 
+        let category = prompt("Choose a category: 'spicy', 'important', 'names', or 'boop'").trim().toLowerCase(); 
         // Trim and convert to lowercase for comparison
 
         // Check if the category exists in wordCategories, using lowercase comparison
@@ -47,7 +47,7 @@ window.addEventListener('keydown', (event) => {
                 localStorage.setItem('wordCategories', JSON.stringify(wordCategories));
             }
         } else {
-            alert("Invalid category! Please choose from 'spicy', 'important', 'names', or 'super'.");
+            alert("Invalid category! Please choose from 'spicy', 'important', 'names', or 'boop'.");
         }
     }
 });
@@ -64,7 +64,7 @@ const highlightWords = (text) => {
         const pattern = words.map(word => `\\b${word}\\b`).join('|');
         const regex = new RegExp(pattern, 'gi');
 
-        if (category === 'super') {
+        if (category === 'boop') {
             // Special case for 'super' category with rainbow effect
             highlightedText = highlightedText.replace(regex, (matched) => 
                 `<span class="rainbow-text">${matched}</span>`

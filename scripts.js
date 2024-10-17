@@ -67,7 +67,7 @@ const highlightWords = (text) => {
         if (category === 'boop') {
             // Special case for 'super' category with rainbow effect
             highlightedText = highlightedText.replace(regex, (matched) => 
-                `<span class="rainbow-text">${matched}</span>`
+                `<span class="exploding-text">${matched}</span>`
             );
         } else {
             // Default highlight behavior for other categories

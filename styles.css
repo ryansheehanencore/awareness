@@ -62,17 +62,15 @@ body {
 @keyframes explode {
     0% {
         transform: scale(1);         /* Normal size */
-        letter-spacing: 0px;         /* Normal letter spacing */
-        opacity: 1;                  /* Fully visible */
+                        /* Fully visible */
     }
     50% {
         transform: scale(1.5);       /* Slightly increased size */
-        letter-spacing: 5px;        /* Letters spreading out */
-        opacity: 0.8;                /* Starting to fade */
+                    /* Starting to fade */
     }
     100% {
         transform: scale(2);         /* Larger size */
-        letter-spacing: 10px;        /* Letters fully spread out */
-        opacity: 0;                  /* Fully faded out */
+             /* Letters fully spread out */
+                       /* Fully faded out */
     }
 }

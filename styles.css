@@ -51,6 +51,6 @@ body {
         0px -5em 0px blue,       /* Blue shadow five lines above */
         0px -6em 0px indigo,     /* Indigo shadow six lines above */
         0px -7em 0px violet;     /* Violet shadow seven lines above */
-    line-height: 1em;  /* Ensure the line height is equal to the font size */
+    line-height: .75em;  /* Ensure the line height is equal to the font size */
 }
 

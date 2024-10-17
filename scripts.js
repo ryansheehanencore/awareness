@@ -27,14 +27,16 @@ let wordCategories = {
 
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'c') {
-        const category = prompt("Choose a category: 'spicy', 'important', 'names', or 'super'");
-        // Ensure that the category is checked correctly
-        if (category && Object.keys(wordCategories).includes(category)) {
+        let category = prompt("Choose a category: 'spicy', 'important', 'names', or 'super'").trim().toLowerCase(); 
+        // Trim and convert to lowercase for comparison
+
+        // Check if the category exists in wordCategories, using lowercase comparison
+        if (category && Object.keys(wordCategories).map(cat => cat.toLowerCase()).includes(category)) {
             const input = prompt("Enter a list of words to highlight (comma separated):");
             if (input) {
                 wordCategories[category].words = input.split(',').map(word => word.trim());
 
-                // Skip color input for 'super' category
+                // Skip the color input for 'super' since it has a special behavior
                 if (category !== 'super') {
                     const colorInput = prompt(`Enter a color for ${category} words (e.g., 'red', '#ff0000'):`);
                     if (colorInput) {
@@ -49,6 +51,7 @@ window.addEventListener('keydown', (event) => {
         }
     }
 });
+
 
 
 const highlightWords = (text) => {

@@ -67,12 +67,12 @@ body {
     }
     50% {
         transform: scale(1.5);       /* Slightly increased size */
-        letter-spacing: 10px;        /* Letters spreading out */
+        letter-spacing: 5px;        /* Letters spreading out */
         opacity: 0.8;                /* Starting to fade */
     }
     100% {
         transform: scale(2);         /* Larger size */
-        letter-spacing: 50px;        /* Letters fully spread out */
+        letter-spacing: 10px;        /* Letters fully spread out */
         opacity: 0;                  /* Fully faded out */
     }
 }

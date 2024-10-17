@@ -54,12 +54,13 @@ body {
     left: 0;
     width: 100%;
     height: 30px;
-    color: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
-    animation: rainbow-shift 2s infinite;  /* Continuous rainbow shift animation */
-}
-
-@keyframes rainbow-shift {
-    0% { background-position: 0% 0%; }
-    100% { background-position: 100% 0%; }
+  text-shadow: 
+        0px -1px 0px red,        /* Red shadow directly above */
+        0px -2px 0px orange,     /* Orange shadow slightly higher */
+        0px -3px 0px yellow,     /* Yellow shadow above orange */
+        0px -4px 0px green,      /* Green shadow above yellow */
+        0px -5px 0px blue,       /* Blue shadow above green */
+        0px -6px 0px indigo,     /* Indigo shadow above blue */
+        0px -7px 0px violet;     /* Violet shadow at the top */
 }
 

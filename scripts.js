@@ -1,7 +1,8 @@
 let wordCategories = {
     'spicy': { words: [], color: 'red' },
     'important': { words: [], color: 'blue' },
-    'names': { words: [], color: 'green' }
+    'names': { words: [], color: 'green' },
+    'super': { words: [], behavior: 'rainbow' }  // Added 'super' category
 };
 
 // Prompt to pick a category, enter words, and set color

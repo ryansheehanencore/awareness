@@ -2,7 +2,7 @@ let wordCategories = {
     'spicy': { words: [], color: 'red' },
     'important': { words: [], color: 'blue' },
     'names': { words: [], color: 'green' },
-    'boop': { words: [], behavior: 'rainbow' },  // Added 'super' category
+    'boop': { words: [], color: 'rainbow' },  // Added 'super' category
 };
 
 // Prompt to pick a category, enter words, and set color

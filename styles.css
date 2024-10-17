@@ -54,7 +54,7 @@ body {
     left: 0;
     width: 100%;
     height: 30px;
-    background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+    color: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
     animation: rainbow-shift 2s infinite;  /* Continuous rainbow shift animation */
 }
 

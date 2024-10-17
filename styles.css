@@ -56,7 +56,7 @@ body {
 
 .rainbow-text {
     display: inline-block;  /* To allow transformation */
-    animation: rainbow 100ms forwards;  /* rainbow animation for 100 ms */
+    animation: rainbow 1000ms forwards;  /* rainbow animation for 1000ms */
 }
 
 @keyframes rainbow {

@@ -43,16 +43,17 @@ body {
 }
 
 .rainbow-text {
-    position: relative;
+    position: absolute;
     color: white;
     font-weight: bold;
-    text-shadow: 
-        0px -10px 0px red,        /* Red shadow directly above */
-        0px -20px 0px orange,     /* Orange shadow slightly higher */
-        0px -30px 0px yellow,     /* Yellow shadow above orange */
-        0px -40px 0px green,      /* Green shadow above yellow */
-        0px -50px 0px blue,       /* Blue shadow above green */
-        0px -60px 0px indigo,     /* Indigo shadow above blue */
-        0px -70px 0px violet;     /* Violet shadow at the top */
+        text-shadow: 
+        0px -1em 0px red,        /* Red shadow one line above */
+        0px -2em 0px orange,     /* Orange shadow two lines above */
+        0px -3em 0px yellow,     /* Yellow shadow three lines above */
+        0px -4em 0px green,      /* Green shadow four lines above */
+        0px -5em 0px blue,       /* Blue shadow five lines above */
+        0px -6em 0px indigo,     /* Indigo shadow six lines above */
+        0px -7em 0px violet;     /* Violet shadow seven lines above */
+    line-height: 1em;  /* Ensure the line height is equal to the font size */
 }
 

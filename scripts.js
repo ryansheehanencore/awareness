@@ -28,12 +28,13 @@ let wordCategories = {
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'c') {
         const category = prompt("Choose a category: 'spicy', 'important', 'names', or 'super'");
-        if (category && wordCategories[category]) {
+        // Ensure that the category is checked correctly
+        if (category && Object.keys(wordCategories).includes(category)) {
             const input = prompt("Enter a list of words to highlight (comma separated):");
             if (input) {
                 wordCategories[category].words = input.split(',').map(word => word.trim());
 
-                // Skip the color prompt for 'super' since it has a special behavior
+                // Skip color input for 'super' category
                 if (category !== 'super') {
                     const colorInput = prompt(`Enter a color for ${category} words (e.g., 'red', '#ff0000'):`);
                     if (colorInput) {

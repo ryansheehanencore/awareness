@@ -43,9 +43,6 @@ body {
 }
 
 .rainbow-text {
-    position: absolute;
-    color: white;
-    font-weight: bold;
         text-shadow: 
         0px -1em 0px red,        /* Red shadow one line above */
         0px -2em 0px orange,     /* Orange shadow two lines above */

@@ -41,3 +41,25 @@ body {
 .visible {
     opacity: 1 !important;
 }
+
+.rainbow-text {
+    position: relative;
+    color: white;
+}
+
+.rainbow-text::before {
+    content: '';
+    position: absolute;
+    top: -30px;  /* Position above the text */
+    left: 0;
+    width: 100%;
+    height: 30px;
+    background: linear-gradient(to right, red, orange, yellow, green, blue, indigo, violet);
+    animation: rainbow-shift 2s infinite;  /* Continuous rainbow shift animation */
+}
+
+@keyframes rainbow-shift {
+    0% { background-position: 0% 0%; }
+    100% { background-position: 100% 0%; }
+}
+

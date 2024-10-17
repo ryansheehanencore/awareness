@@ -37,7 +37,7 @@ window.addEventListener('keydown', (event) => {
                 wordCategories[category].words = input.split(',').map(word => word.trim());
 
                 // Skip the color input for 'super' since it has a special behavior
-                if (category !== 'super') {
+                if (category !== 'boop') {
                     const colorInput = prompt(`Enter a color for ${category} words (e.g., 'red', '#ff0000'):`);
                     if (colorInput) {
                         wordCategories[category].color = colorInput.trim();

@@ -27,7 +27,7 @@ let wordCategories = {
 
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'c') {
-        const category = prompt("Choose a category: 'spicy', 'important', 'names', or 'super');
+        const category = prompt("Choose a category: 'spicy', 'important', 'names', or 'super'");
         if (category && wordCategories[category]) {
             const input = prompt("Enter a list of words to highlight (comma separated):");
             if (input) {

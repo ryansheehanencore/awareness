@@ -6,38 +6,89 @@ let wordCategories = {
 };
 
 // Prompt to pick a category, enter words, and set color
+///window.addEventListener('keydown', (event) => {
+///    if (event.key.toLowerCase() === 'c') {
+///        const category = prompt("Choose a category: 'spicy', 'important', or 'names'");
+///        if (category && wordCategories[category]) {
+///            const input = prompt("Enter a list of words to highlight (comma separated):");
+///            if (input) {
+///                wordCategories[category].words = input.split(',').map(word => word.trim());
+///                const colorInput = prompt(`Enter a color for ${category} words (e.g., 'red', '#ff0000'):`);
+///                if (colorInput) {
+///                    wordCategories[category].color = colorInput.trim();
+///                }
+///                localStorage.setItem('wordCategories', JSON.stringify(wordCategories));
+///            }
+///        } else {
+///            alert("Invalid category! Please choose from 'spicy', 'important', or 'names'.");
+///        }
+///    }
+///});
+
 window.addEventListener('keydown', (event) => {
     if (event.key.toLowerCase() === 'c') {
-        const category = prompt("Choose a category: 'spicy', 'important', or 'names'");
+        const category = prompt("Choose a category: 'spicy', 'important', 'names', or 'super'");
         if (category && wordCategories[category]) {
             const input = prompt("Enter a list of words to highlight (comma separated):");
             if (input) {
                 wordCategories[category].words = input.split(',').map(word => word.trim());
-                const colorInput = prompt(`Enter a color for ${category} words (e.g., 'red', '#ff0000'):`);
-                if (colorInput) {
-                    wordCategories[category].color = colorInput.trim();
+
+                // Skip the color prompt for 'super' since it has a special behavior
+                if (category !== 'super') {
+                    const colorInput = prompt(`Enter a color for ${category} words (e.g., 'red', '#ff0000'):`);
+                    if (colorInput) {
+                        wordCategories[category].color = colorInput.trim();
+                    }
                 }
+
                 localStorage.setItem('wordCategories', JSON.stringify(wordCategories));
             }
         } else {
-            alert("Invalid category! Please choose from 'spicy', 'important', or 'names'.");
+            alert("Invalid category! Please choose from 'spicy', 'important', 'names', or 'super'.");
         }
     }
 });
+
 
 const highlightWords = (text) => {
     let highlightedText = text;
 
     Object.keys(wordCategories).forEach(category => {
-        const { words, color } = wordCategories[category];
+        const { words, color, behavior } = wordCategories[category];
         if (words.length === 0) return;
+
         const pattern = words.map(word => `\\b${word}\\b`).join('|');
         const regex = new RegExp(pattern, 'gi');
-        highlightedText = highlightedText.replace(regex, (matched) => `<span style="color: ${color};">${matched}</span>`);
+
+        if (category === 'super') {
+            // Special case for 'super' category with rainbow effect
+            highlightedText = highlightedText.replace(regex, (matched) => 
+                `<span class="rainbow-text">${matched}</span>`
+            );
+        } else {
+            // Default highlight behavior for other categories
+            highlightedText = highlightedText.replace(regex, (matched) => 
+                `<span style="color: ${color};">${matched}</span>`
+            );
+        }
     });
 
     return highlightedText;
 };
+
+///const highlightWords = (text) => {
+///    let highlightedText = text;
+///
+///    Object.keys(wordCategories).forEach(category => {
+ ///       const { words, color } = wordCategories[category];
+    ///    if (words.length === 0) return;
+    ///    const pattern = words.map(word => `\\b${word}\\b`).join('|');
+    ///    const regex = new RegExp(pattern, 'gi');
+    ///    highlightedText = highlightedText.replace(regex, (matched) => `<span style="color: ${color};">${matched}</span>`);
+  ///  });
+///
+   /// return highlightedText;
+///};
 
 // Load stored categories from localStorage if available
 const storedCategories = localStorage.getItem('wordCategories');
